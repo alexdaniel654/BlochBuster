@@ -300,7 +300,7 @@ def savegif(outfile, tempdir, fps):
 # Main program
 def BlochBuster(configFile, leapFactor=1, blackBackground=False):
     if blackBackground:
-        for i in ['bg', 'axis', 'text', 'circle']:
+        for i in ['bg', 'axis', 'text', 'circle', 'RFText']:
             colors[i][:3] = list(map(lambda x: 1-x, colors[i][:3]))
     # Read configuration file
     with open(configFile, 'r') as f:
