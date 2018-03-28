@@ -33,9 +33,7 @@ The -b flag toggles black background.
 
 DEPENDENCIES
 ------------
-BlochBuster was written in Python 3.4.3, using libraries Matplotlib 1.4.3 and 
-Numpy 1.9.3. BlochBuster uses ImageMagick to create animated GIF files, so
-ImageMagick should be installed (www.imagemagick.org).
+BlochBuster was written in Python 3.4.3, using libraries Matplotlib 1.4.3, Numpy 1.9.3 and Imageio 2.2.0. 
 
 CONTACT INFORMATION
 -------------------
@@ -43,3 +41,8 @@ Johan Berglund, Ph.D.
 Karolinska Institutet,  
 Stockholm, Sweden  
 johan.berglund@neuroradkarolinska.se
+
+Alex Daniel
+Sir Peter Mansfield Imaging Centre,
+Nottingham, United Kingdom
+alexander.daniel@nottingham.ac.uk
