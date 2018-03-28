@@ -27,11 +27,13 @@ import shutil
 import csv
 import optparse
 import json
+import imageio as iio
+import glob
 
-colors = {  'bg': [1,1,1], 
+colors = {  'bg': [1,1,1],
             'circle': [0,0,0,.03],
             'axis': [.5,.5,.5],
-            'text': [.05,.05,.05], 
+            'text': [.05,.05,.05],
             'spoilText': [80/256,0,0],
             'RFText': [0,80/256,0],
             'comps': [  [.3,.5,.2],
@@ -288,6 +290,12 @@ def getClockSpoilAndRFText(pulseSeq, TR, nTR, w1, dt, instantRF=False):
 
 def filename(dir, frame): return dir + '/' + format(frame+1, '04') + '.png'
 
+def savegif(outfile, tempdir, fps):
+    files = glob.glob(tempdir+'/*.png')
+    frames = []
+    for f in range(len(files)):
+        frames.append(iio.imread(files[f]))
+    iio.mimsave(outfile, frames, fps=fps)
 
 # Main program
 def BlochBuster(configFile, leapFactor=1, blackBackground=False):
@@ -298,7 +306,7 @@ def BlochBuster(configFile, leapFactor=1, blackBackground=False):
     with open(configFile, 'r') as f:
         config = json.load(f)
     # Assert pulses in pulseSeq are sorted according to time
-    config['pulseSeq'] = sorted(config['pulseSeq'], key=lambda pulse: pulse['t']) 
+    config['pulseSeq'] = sorted(config['pulseSeq'], key=lambda pulse: pulse['t'])
     # Set complex flip angles
     for pulse in config['pulseSeq']:
         if 'phase' in pulse:
@@ -350,8 +358,7 @@ def BlochBuster(configFile, leapFactor=1, blackBackground=False):
                 os.mkdir(outdir)
             outfile = r'./out/'+outfile
             print(r'Creating animated gif "{}"'.format(outfile))
-            compress = r'-layers Optimize'
-            os.system(('convert {} -delay {} {}/*png {}'.format(compress, delay, tmpdir, outfile)))
+            savegif(outfile, tmpdir, fps)
             shutil.rmtree(tmpdir)
 
 
