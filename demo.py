@@ -1,3 +1,3 @@
 import BlochBuster
 
-BlochBuster.BlochBuster(r'config/SE.json', 1, False)
+BlochBuster.BlochBuster(r'config/IR.json', 1, True)

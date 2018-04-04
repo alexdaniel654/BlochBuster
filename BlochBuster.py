@@ -335,11 +335,11 @@ def BlochBuster(configFile, leapFactor=1, blackBackground=False):
     tmpdir = r'./tmp'
     outdir = r'./out'
     if os.path.isdir(tmpdir):
-        rmTmpDir = input(r'Temporary folder "{}" already exists. Delete(Y/N)?'.format(tmpdir))
-        if rmTmpDir.upper() == 'Y':
-            shutil.rmtree(tmpdir)
-        else:
-            raise Exception('No files written.')
+#        rmTmpDir = input(r'Temporary folder "{}" already exists. Delete(Y/N)?'.format(tmpdir))
+#        if rmTmpDir.upper() == 'Y':
+        shutil.rmtree(tmpdir)
+#        else:
+#            raise Exception('No files written.')
     for (plotType, outfile) in [('3D', config['outFile3D']), ('xy', config['outFileMxy']), ('z', config['outFileMz'])]:
         if outfile:
             os.mkdir(tmpdir)

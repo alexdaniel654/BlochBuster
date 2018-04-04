@@ -1,0 +1,21 @@
+{
+    "title": "Inversion Recovery",
+    "pulseSeq": [
+        {"t": 0, "FA": 180},
+        {"t": 2400, "FA": 90}
+        ],
+    "TR": 3000,
+    "nTR": 1,
+    "B0": 0.1,
+    "B1": 0.45,
+    "components": [
+        {"name": "Cortex", "Meq": 1.0, "CS": 0.0, "T1": 737.7, "T2": 138.3},
+        {"name": "Medulla", "Meq": 1.0, "CS": 0.0, "T1": 926.0, "T2": 126.5}
+        ],
+    "nIsochromats": 1,
+    "isochromatStep": 0.01,
+    "speed": 0.3,
+    "outFile3D": "",
+    "outFileMxy": "IR_Mxy.gif",
+    "outFileMz": "IR_Mz.gif"
+}
