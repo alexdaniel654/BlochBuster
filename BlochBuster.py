@@ -26,30 +26,29 @@ The animations are made using ffmpeg.
 
 import mpl_toolkits.mplot3d.art3d as art3d
 from mpl_toolkits.mplot3d import proj3d
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-# import matplotlib.animation as animation
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Rectangle
 from matplotlib.patches import FancyArrowPatch
 import numpy as np
 from numbers import Number
 import scipy.integrate as integrate
 import os.path
 import shutil
-import csv
-import optparse
-import json
-import imageio as iio
-import glob
 import argparse
 import yaml
 import FFMPEGwriter
+import progressbar
 
-colors = {  'bg': [1,1,1],
-            'circle': [0,0,0,.03],
-            'axis': [.5,.5,.5],
-            'text': [.05,.05,.05],
-            'spoilText': [80/256,0,0],
-            'RFText': [0,80/256,0],
+
+colors = {  'bg':       [1,1,1], 
+            'circle':   [0,0,0,.03],
+            'axis':     [.5,.5,.5],
+            'text':     [.05,.05,.05], 
+            'spoilText':[.5,0,0],
+            'RFtext':   [0,.5,0],
+            'Gtext':    [80/256,80/256,0],
             'comps': [  [.3,.5,.2],
                         [.1,.4,.5],
                         [.5,.3,.2],
@@ -141,19 +140,22 @@ def plotFrame3D(config, vectors, frame, output):
             ax.add_patch(circle)
             art3d.pathpatch_2d_to_3d(circle, z=0, zdir=i)
 
-    # Draw x, y, and z axes
-    ax.plot([-1, 1], [0, 0], [0, 0], c=colors['axis'], zorder=-1)  # x-axis
-    ax.text(1.1, 0, 0, r'$x^\prime$', horizontalalignment='center', color=colors['text'])
-    ax.plot([0, 0], [-1, 1], [0, 0], c=colors['axis'], zorder=-1)  # y-axis
-    ax.text(0, 1.2, 0, r'$y^\prime$', horizontalalignment='center', color=colors['text'])
-    ax.plot([0, 0], [0, 0], [-1, 1], c=colors['axis'], zorder=-1)  # z-axis
-    ax.text(0, 0, 1.1, r'$z$', horizontalalignment='center', color=colors['text'])
+        # Draw x, y, and z axes
+        ax.plot([-1, 1], [0, 0], [0, 0], c=colors['axis'], zorder=-1)  # x-axis
+        ax.text(1.08, 0, 0, r'$x^\prime$', horizontalalignment='center', color=colors['text'])
+        ax.plot([0, 0], [-1, 1], [0, 0], c=colors['axis'], zorder=-1)  # y-axis
+        ax.text(0, 1.12, 0, r'$y^\prime$', horizontalalignment='center', color=colors['text'])
+        ax.plot([0, 0], [0, 0], [-1, 1], c=colors['axis'], zorder=-1)  # z-axis
+        ax.text(0, 0, 1.05, r'$z$', horizontalalignment='center', color=colors['text'])
 
     # Draw title:
-    ax.text(0, 0, 1.4, title, fontsize=14, horizontalalignment='center', color=colors['text'])
+    fig.text(.5, 1, config['title'], fontsize=14, horizontalalignment='center', verticalalignment='top', color=colors['text'])
+
     # Draw time
     time_text = fig.text(0, 0, 'time = %.1f msec' % (config['tFrames'][frame%(len(config['t'])-1)]), color=colors['text'], verticalalignment='bottom')
 
+    # TODO: put isochromats in this order from start
+    order = [int((nIsoc-1)/2-abs(m-(nIsoc-1)/2)) for m in range(nIsoc)]
     # Draw magnetization vectors
     for z in range(nz):
         for y in range(ny):
@@ -186,15 +188,20 @@ def plotFrame3D(config, vectors, frame, output):
             color=colors['spoilText'], horizontalalignment='right', verticalalignment='top')
 
     # Draw legend:
+    for c in range(nComps):
+        col = colors['comps'][(c) % len(colors['comps'])]
+        ax.plot([0, 0], [0, 0], [0, 0], '-', lw=2, color=col, alpha=1.,
+                    label=config['components'][c]['name'])
     handles, labels = ax.get_legend_handles_labels()
-    leg = ax.legend(
-                    [plt.Line2D((0, 1), (0, 0), lw=2, color=colors['comps'][(c) %
+    leg = fig.legend([plt.Line2D((0, 1), (0, 0), lw=2, color=colors['comps'][(c) %
                                 len(colors['comps'])]) for c, handle in enumerate(
                                 handles)], labels, loc=2, bbox_to_anchor=[
-                                .14, .83])
+                                -.025, .94])
     leg.draw_frame(False)
     for text in leg.get_texts():
         text.set_color(colors['text'])
+    
+    return fig
 
 
 def plotFrameMT(config, signal, frame, output):
@@ -227,12 +234,16 @@ def plotFrameMT(config, signal, frame, output):
     for side in ['bottom', 'right', 'top', 'left']:
         ax.spines[side].set_visible(False)  # remove default axes
     ax.grid()
-    plt.title(title, color=colors['text'])
+    plt.title(config['title'], color=colors['text'])
     plt.xlabel('time[ms]', horizontalalignment='right', color=colors['text'])
-    if plotType == 'xy':
-        ax.xaxis.set_label_coords(1.1, .1)
-        plt.ylabel('$|M_{xy}|$', rotation=0, color=colors['text'])
-    elif plotType == 'z':
+    if output['type'] == 'xy':
+        if 'abs' in output and not output['abs']:
+            ax.xaxis.set_label_coords(1.1, .475)
+            plt.ylabel('$M_x, M_y$', rotation=0, color=colors['text'])
+        else: # absolute value of transversal magnetization
+            ax.xaxis.set_label_coords(1.1, .1)
+            plt.ylabel('$|M_{xy}|$', rotation=0, color=colors['text'])
+    elif output['type'] == 'z':
         ax.xaxis.set_label_coords(1.1, .475)
         plt.ylabel('$M_z$', rotation=0, color=colors['text'])
     ax.yaxis.set_label_coords(-.07, .95)
@@ -250,6 +261,7 @@ def plotFrameMT(config, signal, frame, output):
     yhl = hl/(xmax-xmin)*(ymax-ymin) * width/height
     ax.arrow(xmin, 0, (xmax-xmin)*1.05, 0, fc=colors['text'], ec=colors['text'], lw=1, head_width=hw, head_length=hl, clip_on=False, zorder=100)
     ax.arrow(0, ymin, 0, (ymax-ymin)*1.05, fc=colors['text'], ec=colors['text'], lw=1, head_width=yhw, head_length=yhl, clip_on=False, zorder=100)
+    
     # Draw magnetization vectors
     nComps = signal.shape[0]
     if output['type'] == 'xy':
@@ -276,6 +288,7 @@ def plotFrameMT(config, signal, frame, output):
             col = colors['comps'][(c) % len(colors['comps'])]
             ax.plot(config['tFrames'][:frame+1], signal[c,2,:frame+1], '-', lw=2, color=col)
 
+    return fig
 
 
 def plotFrameKspace(config, frame, output):
@@ -1003,12 +1016,6 @@ def arrangeLocations(slices, config, key='locations'):
         raise Exception('Config "{}": inner dimension must be of length 3'.format(key))
     return slices
 
-def savegif(outfile, tempdir, fps):
-    files = glob.glob(tempdir+'/*.png')
-    frames = []
-    for f in range(len(files)):
-        frames.append(iio.imread(files[f]))
-    iio.mimsave(outfile, frames, fps=fps)
 
 def checkConfig(config):
     ''' Check and setup config.
