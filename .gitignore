@@ -1,4 +1,8 @@
 /out
+/local_build_docs
 /__pycache__
 .*
+*~
 *.pyc
+palette.png
+*.h

@@ -1,0 +1,21 @@
+title: Binomial-2
+pulseSeq:
+  - t: 0
+    FA: 45
+    dur: 0.5
+  - t: 2.3
+    FA: 45
+    dur: 0.5
+TR: 10
+B0: 1.5
+components:
+  - name: water
+    CS: 0.0
+  - name: fat
+    CS: -3.40389262
+nIsochromats: 15
+isochromatStep: 0.03
+speed: 0.001
+output:
+  - type: 3D
+    file: binomial2_3D.gif

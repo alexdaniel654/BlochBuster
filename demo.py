@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
 import BlochBuster
 
-BlochBuster.BlochBuster(r'config/IR.json', 1, True)
+
+BlochBuster.run(r'config/SE.yml')

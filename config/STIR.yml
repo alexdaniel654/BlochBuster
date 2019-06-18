@@ -1,0 +1,28 @@
+title: STIR
+pulseSeq:
+  - t: 0
+    FA: 180
+    dur: 4.0
+  - t: 180
+    FA: 90
+    dur: 2.0
+  - t: 190
+    FA: 180
+    phase: 180
+    dur: 3.0
+TR: 800
+B0: 1.5
+components:
+  - name: fluid
+    T1: 2400
+    T2: 160
+  - name: muscle
+    T1: 870
+    T2: 47
+  - name: fat
+    T1: 260
+    T2: 84
+speed: 0.05
+output:
+  - type: 3D
+    file: STIR_3D.gif
