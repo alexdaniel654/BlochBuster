@@ -1217,7 +1217,7 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
     Args:
         configFile: YAML file specifying configuration.
         leapFactor: Skip frame factor for faster processing and smaller filesize.
-        gifWriter:  external program to write gif. Must be "ffmpeg" or "imagemagick"/"convert".
+        gifWriter:  external program to write gif. Must be "ffmpeg", "imagemagick"/"convert" or "static".
         
     '''
     # Check if gifWriter exists
@@ -1228,10 +1228,10 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
     elif gifWriter in ['imagemagick', 'convert']:
         if not shutil.which('convert'):
             raise Exception('ImageMagick (convert) not found')
-    elif gifWriter == 'still':
+    elif gifWriter == 'static':
         Warning('You will only get the last frame')
     else:
-        raise Exception('Argument gifWriter must be "ffmpeg", "imagemagick"/"convert" or "still"')
+        raise Exception('Argument gifWriter must be "ffmpeg", "imagemagick"/"convert" or "static"')
 
     # Set global constants
     global gyro
@@ -1310,7 +1310,7 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                 os.makedirs(tmpdir, exist_ok=True)
             os.makedirs(outdir, exist_ok=True)
             outfile = os.path.join(outdir, output['file'])
-            if gifWriter == 'still':
+            if gifWriter == 'static':
                 frame = len(config['tFrames']) - 1
                 if output['type'] == '3D':
                     fig = plotFrame3D(config, vectors, frame, output)
