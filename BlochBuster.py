@@ -1327,7 +1327,6 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                     file = outfile
                 else:
                     file = outfile + '.png'
-                print(file)
                 plt.savefig(file, facecolor=plt.gcf().get_facecolor())
                 plt.close()
             else:
