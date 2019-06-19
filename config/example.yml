@@ -81,3 +81,5 @@ output:
     file: example_z.gif
   - type: psd
     file: example_psd.gif
+  - type: kspace
+    file: example_kspace.gif
