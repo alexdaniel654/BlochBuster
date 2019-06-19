@@ -3,4 +3,4 @@
 import BlochBuster
 
 
-BlochBuster.run(r'config/SE.yml')
+BlochBuster.run(r'config/SE.yml', gifWriter='still')

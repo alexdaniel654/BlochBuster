@@ -1228,8 +1228,10 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
     elif gifWriter in ['imagemagick', 'convert']:
         if not shutil.which('convert'):
             raise Exception('ImageMagick (convert) not found')
+    elif gifWriter == 'still':
+        Warning('You will only get the last frame')
     else:
-        raise Exception('Argument gifWriter must be "ffmpeg" or "imagemagick"/"convert"')
+        raise Exception('Argument gifWriter must be "ffmpeg", "imagemagick"/"convert" or "still"')
 
     # Set global constants
     global gyro
@@ -1297,7 +1299,7 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                     signal *= output['scale']
             if gifWriter == 'ffmpeg':
                 ffmpegWriter = FFMPEGwriter.FFMPEGwriter(config['fps'])
-            else:
+            elif gifWriter in ['imagemagick', 'convert']:
                 tmpdir = './tmp'
                 if os.path.isdir(tmpdir):
                     rmTmpDir = input('Temporary folder "{}" already exists. Delete(Y/N)?'.format(tmpdir))
@@ -1308,8 +1310,8 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                 os.makedirs(tmpdir, exist_ok=True)
             os.makedirs(outdir, exist_ok=True)
             outfile = os.path.join(outdir, output['file'])
-            for frame in range(0, len(config['tFrames']), leapFactor):
-                # Use only every leapFactor frame in animation
+            if gifWriter == 'still':
+                frame = len(config['tFrames']) - 1
                 if output['type'] == '3D':
                     fig = plotFrame3D(config, vectors, frame, output)
                 elif output['type'] == 'kspace':
@@ -1319,20 +1321,35 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                 elif output['type'] in ['xy', 'z']:
                     fig = plotFrameMT(config, signal, frame, output)
                 plt.draw()
-                if gifWriter == 'ffmpeg':
-                    ffmpegWriter.addFrame(fig)
-                else: # use imagemagick: save frames temporarily 
-                    file = os.path.join(tmpdir, '{}.png'.format(str(frame).zfill(4)))
-                    print('Saving frame {}/{} as "{}"'.format(frame+1, config['nFrames'], file))
-                    plt.savefig(file, facecolor=plt.gcf().get_facecolor())
+                file = outfile[:-3] + 'png'
+                plt.savefig(file, facecolor=plt.gcf().get_facecolor())
                 plt.close()
-            if gifWriter == 'ffmpeg':
-                ffmpegWriter.write(outfile)
-            else: # use imagemagick
-                print('Creating animated gif "{}"'.format(outfile))
-                compress = '-layers Optimize'
-                os.system(('convert {} -delay {} {}/*png {}'.format(compress, delay, tmpdir, outfile)))
-                shutil.rmtree(tmpdir)
+            else:
+                for frame in range(0, len(config['tFrames']), leapFactor):
+                    # Use only every leapFactor frame in animation
+                    if output['type'] == '3D':
+                        fig = plotFrame3D(config, vectors, frame, output)
+                    elif output['type'] == 'kspace':
+                        fig = plotFrameKspace(config, frame, output)
+                    elif output['type'] == 'psd':
+                        fig = plotFramePSD(config, frame, output)
+                    elif output['type'] in ['xy', 'z']:
+                        fig = plotFrameMT(config, signal, frame, output)
+                    plt.draw()
+                    if gifWriter == 'ffmpeg':
+                        ffmpegWriter.addFrame(fig)
+                    else:  # use imagemagick: save frames temporarily
+                        file = os.path.join(tmpdir, '{}.png'.format(str(frame).zfill(4)))
+                        print('Saving frame {}/{} as "{}"'.format(frame+1, config['nFrames'], file))
+                        plt.savefig(file, facecolor=plt.gcf().get_facecolor())
+                    plt.close()
+                if gifWriter == 'ffmpeg':
+                    ffmpegWriter.write(outfile)
+                else: # use imagemagick
+                    print('Creating animated gif "{}"'.format(outfile))
+                    compress = '-layers Optimize'
+                    os.system(('convert {} -delay {} {}/*png {}'.format(compress, delay, tmpdir, outfile)))
+                    shutil.rmtree(tmpdir)
 
 
 def parseAndRun():
