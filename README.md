@@ -65,7 +65,7 @@ The filename is specified by "file". The file ending can be .gif, .mp4 or .png i
 
 HOW TO USE
 ----------
-`Example 1: python BlochBuster.py -c "config/SE.json"`
+`Example 1: python BlochBuster.py -c "config/SE.yml"`
 
 `Example 2: python BlochBuster.py -c "config/SpEnc.yml" -l 5`
 
@@ -74,7 +74,9 @@ The -l flag is optional and specifies a leap factor, allowing frames to be skipp
 
 DEPENDENCIES
 ------------
-BlochBuster was written in Python 3.4.3, using libraries Matplotlib 1.4.3, Numpy 1.9.3 and Imageio 2.2.0. 
+BlochBuster was written in Python 3.4.3, using libraries Matplotlib 1.4.3 and 
+Numpy 1.9.3. BlochBuster uses ffmpeg to create animated gif or mp4 files, so
+ffmpeg needs to be installed (https://www.ffmpeg.org/).
 
 CONTACT INFORMATION
 -------------------

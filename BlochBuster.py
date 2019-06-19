@@ -39,7 +39,6 @@ import shutil
 import argparse
 import yaml
 import FFMPEGwriter
-import progressbar
 
 
 colors = {  'bg':       [1,1,1], 
