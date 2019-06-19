@@ -61,7 +61,7 @@ The output is specified by a list, where the "type" can be:
 - psd: events plotted as a pulse sequence diagram
 - xy: animated plot of transverse magnetization over time. If "abs: false", both real and imaginary components are plotted.
 - z: animated plot of transverse magnetization over time
-The filename is specified by "file". The file ending can be .gif or .mp4.
+The filename is specified by "file". The file ending can be .gif, .mp4 or .png if `gifWriter` is `'static'`.
 
 HOW TO USE
 ----------
@@ -82,8 +82,3 @@ Johan Berglund, Ph.D.
 Karolinska Institutet,  
 Stockholm, Sweden  
 johan.berglund@neuroradkarolinska.se
-
-Alex Daniel
-Sir Peter Mansfield Imaging Centre,
-Nottingham, United Kingdom
-alexander.daniel@nottingham.ac.uk
