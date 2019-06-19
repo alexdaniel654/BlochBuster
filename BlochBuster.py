@@ -1321,7 +1321,13 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                 elif output['type'] in ['xy', 'z']:
                     fig = plotFrameMT(config, signal, frame, output)
                 plt.draw()
-                file = outfile[:-3] + 'png'
+                if outfile[-4:] == '.gif':
+                    file = outfile[:-4] + '.png'
+                elif outfile[-4:] == '.png':
+                    file = outfile
+                else:
+                    file = outfile + '.png'
+                print(file)
                 plt.savefig(file, facecolor=plt.gcf().get_facecolor())
                 plt.close()
             else:
