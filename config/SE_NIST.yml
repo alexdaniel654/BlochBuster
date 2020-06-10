@@ -1,0 +1,101 @@
+title: NIST T2
+pulseSeq:
+    - t: 0
+      FA: 90
+      B1: 'RF/exc_min_phase.yml'
+      dur: 4
+    - t: 11
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 22
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 33
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 44
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 55
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 66
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 77
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 88
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 99
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 110
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 121
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 132
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 143
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 154
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 165
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+    - t: 176
+      FA: 180
+      B1: 'RF/ref.yml'
+      dur: 2
+TR: 200
+nTR: 2
+B0: 3.0
+components:
+    - name: "Bottle #1"
+      CS: 0.0
+      T1: 2756
+      T2: 645.8
+    - name: "Bottle #7"
+      CS: 0.0
+      T1: 782.1
+      T2: 62.51
+    - name: "Bottle #14"
+      CS: 0.0
+      T1: 86.9
+      T2: 5.35
+nIsochromats: 20
+isochromatStep: 0.01
+speed: 
+  - t: 0
+    speed: 0.005
+  - t: 199
+    speed: 0.5
+maxRFspeed: 0.005
+output: 
+  - type: 3D
+    file: NIST_3D_zoom.gif
+  - type: xy
+    file: NIST_Mxy_zoom.gif
+  - type: z
+    file: NIST_Mz_zoom.gif
