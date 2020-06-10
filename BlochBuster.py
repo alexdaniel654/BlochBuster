@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-# Copyright (c) 2017-2019 Johan Berglund
+# Copyright (c) 2017-2020 Johan Berglund
 # BlochBuster is distributed under the terms of the GNU General Public License
 #
 # This program is free software: you can redistribute it and/or modify
@@ -34,6 +34,7 @@ from matplotlib.patches import FancyArrowPatch
 import numpy as np
 from numbers import Number
 import scipy.integrate as integrate
+from scipy.stats import norm
 import os.path
 import shutil
 import argparse
@@ -89,14 +90,6 @@ def plotFrame3D(config, vectors, frame, output):
 
     '''
     nx, ny, nz, nComps, nIsoc = vectors.shape[:5]
-    if config['collapseLocations']:
-        xpos = np.zeros([nx])
-        ypos = np.zeros([nx])
-        zpos = np.zeros([nx])
-    else:
-        xpos = np.arange(nx)-nx/2+.5
-        ypos = -(np.arange(ny)-ny/2+.5)
-        zpos = -(np.arange(nz)-nz/2+.5)
 
     # Create 3D axes
     if nx*ny*nz==1 or config['collapseLocations']:
@@ -115,7 +108,6 @@ def plotFrame3D(config, vectors, frame, output):
     if config['collapseLocations']:
         axLimit = 1.0
     ax = fig.gca(projection='3d', xlim=(-axLimit,axLimit), ylim=(-axLimit,axLimit), zlim=(-axLimit,axLimit), fc=colors['bg'])
-    ax.set_aspect('equal')
     
     if nx*ny*nz>1 and not config['collapseLocations']:
         azim = -78 # azimuthal angle of x-y-plane
@@ -151,10 +143,18 @@ def plotFrame3D(config, vectors, frame, output):
     fig.text(.5, 1, config['title'], fontsize=14, horizontalalignment='center', verticalalignment='top', color=colors['text'])
 
     # Draw time
-    time_text = fig.text(0, 0, 'time = %.1f msec' % (config['tFrames'][frame%(len(config['t'])-1)]), color=colors['text'], verticalalignment='bottom')
+    time = config['tFrames'][frame%(len(config['t'])-1)] # frame time [msec]
+    time_text = fig.text(0, 0, 'time = %.1f msec' % (time), color=colors['text'], verticalalignment='bottom')
 
     # TODO: put isochromats in this order from start
     order = [int((nIsoc-1)/2-abs(m-(nIsoc-1)/2)) for m in range(nIsoc)]
+    thres = 0.075*axLimit # threshold on vector magnitude for shrinking
+    if 'rotate' in output:
+        rotFreq = output['rotate'] * 1e-3 # coordinate system rotation relative resonance frequency [kHz]
+        rotMat = rotMatrix(2 * np.pi * rotFreq * time, 2) # rotation matrix for rotating coordinate system
+
+    pos = [0,0,0]
+
     # Draw magnetization vectors
     for z in range(nz):
         for y in range(ny):
@@ -162,17 +162,20 @@ def plotFrame3D(config, vectors, frame, output):
                 for c in range(nComps):
                     for m in range(nIsoc):
                         col = colors['comps'][(c) % len(colors['comps'])]
-                        M = vectors[x,y,z,c,m,:,frame]
+                        M = vectors[x,y,z,c,m,:3,frame]
+                        if not config['collapseLocations']:
+                            pos = vectors[x,y,z,c,m,3:,frame]/config['locSpacing']
+                        if 'rotate' in output:
+                            M = np.dot(M, rotMat) # rotate vector relative to coordinate system
                         Mnorm = np.linalg.norm(M)
                         alpha = 1.-2*np.abs((m+.5)/nIsoc-.5)
-                        thres = 0.075*axLimit
                         if Mnorm>thres:
                             arrowScale = 20
                         else:
                             arrowScale = 20*Mnorm/thres # Shrink arrowhead close to origo
-                        ax.add_artist(Arrow3D(  [xpos[x], xpos[x]+M[0]], 
-                                                [ypos[y], ypos[y]+M[1]],
-                                                [zpos[z], zpos[z]+M[2]], 
+                        ax.add_artist(Arrow3D(  [pos[0], pos[0]+M[0]], 
+                                                [-pos[1], -pos[1]+M[1]],
+                                                [-pos[2], -pos[2]+M[2]], 
                                                 mutation_scale=arrowScale,
                                                 arrowstyle='-|>', shrinkA=0, shrinkB=0, lw=2,
                                                 color=col, alpha=alpha, 
@@ -220,7 +223,8 @@ def plotFrameMT(config, signal, frame, output):
         raise Exception('output "type" must be 3D, kspace, psd, xy (transversal) or z (longitudinal)')
 
     # create diagram
-    xmin, xmax = 0, config['tFrames'][-1]
+    xmin, xmax = output['tRange']
+    
     if output['type'] == 'xy':
         if 'abs' in output and not output['abs']:
             ymin, ymax = -1, 1
@@ -259,7 +263,7 @@ def plotFrameMT(config, signal, frame, output):
     yhw = hw/(ymax-ymin)*(xmax-xmin) * height/width  # compute matching arrowhead length and width
     yhl = hl/(xmax-xmin)*(ymax-ymin) * width/height
     ax.arrow(xmin, 0, (xmax-xmin)*1.05, 0, fc=colors['text'], ec=colors['text'], lw=1, head_width=hw, head_length=hl, clip_on=False, zorder=100)
-    ax.arrow(0, ymin, 0, (ymax-ymin)*1.05, fc=colors['text'], ec=colors['text'], lw=1, head_width=yhw, head_length=yhl, clip_on=False, zorder=100)
+    ax.arrow(xmin, ymin, 0, (ymax-ymin)*1.05, fc=colors['text'], ec=colors['text'], lw=1, head_width=yhw, head_length=yhl, clip_on=False, zorder=100)
     
     # Draw magnetization vectors
     nComps = signal.shape[0]
@@ -349,7 +353,7 @@ def plotFramePSD(config, frame, output):
     if 'fig' in output:
         fig, timeLine = output['fig']
     else:
-        xmin, xmax = 0, config['kernelClock'][-1]
+        xmin, xmax = output['tRange']
         ymin, ymax = 0, 5
         fig = plt.figure(figsize=(5, 5), facecolor=colors['bg'], dpi=output['dpi'])
         ax = fig.gca(xlim=(xmin, xmax), ylim=(ymin, ymax), fc=colors['bg'])
@@ -383,7 +387,9 @@ def plotFramePSD(config, frame, output):
             t.append(event['t']) # start of this event:
 
         boards['w1']['scale'] = 0.48 / np.max([np.abs(w) for w in boards['w1']['signal'] if np.abs(w) < 50])
-        boards['Gx']['scale'] = boards['Gy']['scale'] = boards['Gz']['scale'] = 0.48 / np.max(np.abs(np.concatenate((boards['Gx']['signal'], boards['Gy']['signal'], boards['Gz']['signal']))))
+        if 'gmax' not in output:
+            output['gmax'] = np.max(np.abs(np.concatenate((boards['Gx']['signal'], boards['Gy']['signal'], boards['Gz']['signal']))))
+        boards['Gx']['scale'] = boards['Gy']['scale'] = boards['Gz']['scale'] = 0.48 / output['gmax']
                 
         for board in ['w1', 'Gx', 'Gy', 'Gz']:
             ax.plot(t, boards[board]['ypos'] + np.array(boards[board]['signal']) * boards[board]['scale'], lw=1, color=colors['boards'][board])
@@ -417,13 +423,13 @@ def derivs(M, t, Meq, w, w1, T1, T2):
     '''Bloch equations in rotating frame.
 
     Args:
-        w:    Larmor frequency :math:`2\\pi\\gamma B_0` [kRad / s].
-	w1 (complex):   B1 rotation frequency :math:`2\\pi\\gamma B_1`  [kRad / s].
-        T1:   longitudinal relaxation time.
-        T2:   transverse relaxation time.
-        M:    magnetization vector.
-        Meq:  equilibrium magnetization.
-        t:    time vector (needed for scipy.integrate.odeint).
+        w:              Larmor frequency :math:`2\\pi\\gamma B_0` [kRad / s].
+	    w1 (complex):   B1 rotation frequency :math:`2\\pi\\gamma B_1`  [kRad / s].
+        T1:             longitudinal relaxation time.
+        T2:             transverse relaxation time.
+        M:              magnetization vector.
+        Meq:            equilibrium magnetization.
+        t:              time vector (needed for scipy.integrate.odeint).
 
     Returns:
         integrand :math:`\\frac{dM}{dt}`
@@ -467,28 +473,39 @@ def getEventFrames(config, i):
     return firstFrame, lastFrame
 
 
-def applyPulseSeq(config, Meq, M0, w, T1, T2, xpos=0, ypos=0, zpos=0):
-    '''Simulate magnetization vector during nTR applications of pulse sequence.
+def applyPulseSeq(config, Meq, M0, w, T1, T2, pos0, v, D):
+    '''Simulate magnetization vector during nTR (+nDummies) applications of pulse sequence.
     
     Args:
         config: configuration dictionary.
         Meq:    equilibrium magnetization along z axis.
         M0:     initial state of magnetization vector, numpy array of size 3.
-        w:      Larmor frequency :math:`2\\pi\\gamma B_0` [kRad / s].
+        w:      Larmor frequency :math:`2\\pi\\gamma B_0` [kRad/s].
         T1:     longitudinal relaxation time.
         T2:     transverse relaxation time.
-        xpos:   position of magnetization vector along x gradient.
-        ypos:   position of magnetization vector along y gradient.
-        zpos:   position of magnetization vector along z gradient.
+        pos0:   position (x,y,z) of magnetization vector at t=0 [m].
+        v:      velocity (x,y,z) of spins [mm/s]
+        D:      diffusivity (x,y,z) of spins [:math:`mm^2/s`]
         
     Returns:
-        magnetization vector over time, numpy array of size [3, nFrames]
+        magnetization vector over time, numpy array of size [6, nFrames]. 1:3 are magnetization, 4:6 are position
 
     '''
     M = np.zeros([len(config['t']), 3])
     M[0] = M0 # Initial state
 
-    for rep in range(config['nTR']):
+    pos = np.tile(pos0, [len(config['t']), 1]) # initial position
+    if np.linalg.norm(D) > 0: # diffusion contribution
+        for frame in range(1,len(config['t'])):
+            dt = config['t'][frame] - config['t'][frame-1]
+            for dim in range(3):
+                pos[frame][dim] = pos[frame-1][dim] + norm.rvs(scale=np.sqrt(D[dim]*dt*1e-9)) # standard deviation in meters
+            if config['t'][frame]==0: # reset position for t=0
+                pos[:frame+1] += np.tile(pos0 - pos[frame], [frame+1, 1])
+    if np.linalg.norm(v) > 0: # velocity contribution
+        pos += np.outer(config['t'], v) * 1e-6
+
+    for rep in range(-config['nDummies'], config['nTR']): # dummy TRs get negative frame numbers
         TRstartFrame = rep * config['nFramesPerTR']
 
         for i, event in enumerate(config['events']):
@@ -501,10 +518,12 @@ def applyPulseSeq(config, Meq, M0, w, T1, T2, xpos=0, ypos=0, zpos=0):
             if 'spoil' in event and event['spoil']: # Spoiler event
                 M0 = spoil(M0)
 
-            wg = w  # frequency due to w plus any gradients
-            wg += 2*np.pi*gyro*event['Gx']*xpos/1000 # [kRad/s]
-            wg += 2*np.pi*gyro*event['Gy']*ypos/1000 # [kRad/s]
-            wg += 2*np.pi*gyro*event['Gz']*zpos/1000 # [kRad/s]
+            # frequency due to w plus any gradients 
+            # (use position at firstFrame, i.e. approximate no motion during frame)
+            wg = w  
+            wg += 2*np.pi*gyro*event['Gx']*pos[firstFrame, 0]/1000 # [kRad/s]
+            wg += 2*np.pi*gyro*event['Gy']*pos[firstFrame, 1]/1000 # [kRad/s]
+            wg += 2*np.pi*gyro*event['Gz']*pos[firstFrame, 2]/1000 # [kRad/s]
 
             w1 = event['w1'] * np.exp(1j * np.radians(event['phase']))
 
@@ -513,10 +532,10 @@ def applyPulseSeq(config, Meq, M0, w, T1, T2, xpos=0, ypos=0, zpos=0):
                 raise Exception("Corrupt config['events']")
             M[firstFrame:lastFrame+1] = integrate.odeint(derivs, M0, t, args=(Meq, wg, w1, T1, T2)) # Solve Bloch equation
 
-    return M.transpose()
+    return np.concatenate((M, pos),1).transpose()
 
 
-def simulateComponent(config, component, Meq, M0=None, xpos=0, ypos=0, zpos=0):
+def simulateComponent(config, component, Meq, M0=None, pos=None):
     ''' Simulate nIsochromats magnetization vectors per component with uniform distribution of Larmor frequencies.
 
     Args:
@@ -524,23 +543,25 @@ def simulateComponent(config, component, Meq, M0=None, xpos=0, ypos=0, zpos=0):
         component:  component specification from config.
         Meq:    equilibrium magnetization along z axis.
         M0:     initial state of magnetization vector, numpy array of size 3.
-        xpos:   position of magnetization vector along x gradient.
-        ypos:   position of magnetization vector along y gradient.
-        zpos:   position of magnetization vector along z gradient.
+        pos:   position (x,y,z) of magnetization vector [m].
         
     Returns:
-        component magnetization vectors over time, numpy array of size [nIsochromats, 3, nFrames]
+        component magnetization vectors over time, numpy array of size [nIsochromats, 6, nFrames].  1:3 are magnetization, 4:6 are position.
 
     '''
     if not M0:
         M0 = [0, 0, Meq] # Default initial state is equilibrium magnetization
+    if not pos:
+        pos = [0, 0, 0]
+    v = [component['vx'], component['vy'], component['vz']]
+    D = [component['Dx'], component['Dy'], component['Dz']]
     # Shifts in ppm for dephasing vectors:
     isochromats = [(2*i+1-config['nIsochromats'])/2*config['isochromatStep']+component['CS'] for i in range(0, config['nIsochromats'])]
-    comp = np.empty((config['nIsochromats'],3,len(config['t'])))
+    comp = np.empty((config['nIsochromats'],6,len(config['t'])))
 
     for m, isochromat in enumerate(isochromats):
         w = config['w0']*isochromat*1e-6  # Demodulated frequency [kRad / s]
-        comp[m,:,:] = applyPulseSeq(config, Meq, M0, w, component['T1'], component['T2'], xpos, ypos, zpos)
+        comp[m,:,:] = applyPulseSeq(config, Meq, M0, w, component['T1'], component['T2'], pos, v, D)
     return comp
 
 
@@ -974,7 +995,7 @@ def setupPulseSeq(config):
         config['kernelClock'] = config['kernelClock'][:-1]
     config['nFramesPerTR'] = len(config['kernelClock'])
     config['t'] = np.array([])
-    for rep in range(config['nTR']): # Repeat time vector for each TR
+    for rep in range(-config['nDummies'], config['nTR']): # Repeat time vector for each TR (dummy TR:s get negative time)
         config['t'] = np.concatenate((config['t'], roundEventTime(config['kernelClock'] + rep * config['TR'])), axis=None)
     config['t'] = np.concatenate((config['t'], roundEventTime(config['nTR'] * config['TR'])), axis=None) # Add end time to time vector
     config['kernelClock'] = np.concatenate((config['kernelClock'], config['TR']), axis=None) # Add end time to kernel clock
@@ -1030,6 +1051,8 @@ def checkConfig(config):
     config['TR'] = roundEventTime(config['TR'])
     if 'nTR' not in config:
         config['nTR'] = 1
+    if 'nDummies' not in config:
+        config['nDummies'] = 0
     if 'nIsochromats' not in config:
         config['nIsochromats'] = 1
     if 'isochromatStep' not in config:
@@ -1040,7 +1063,16 @@ def checkConfig(config):
     if 'components' not in config:
         config['components'] = [{}]
     for comp in config['components']:
-        for (key, default) in [('name', ''), ('CS', 0), ('T1', np.inf), ('T2', np.inf)]:
+        for (key, default) in [('name', ''), 
+                               ('CS', 0), 
+                               ('T1', np.inf), 
+                               ('T2', np.inf), 
+                               ('vx', 0), 
+                               ('vy', 0), 
+                               ('vz', 0), 
+                               ('Dx', 0), 
+                               ('Dy', 0), 
+                               ('Dz', 0)]:
             if key not in comp:
                 comp[key] = default
     config['nComps'] = len(config['components'])
@@ -1106,8 +1138,19 @@ def checkConfig(config):
     
     # check output
     for output in config['output']:
+        if 'tRange' in output:
+            if not len(output['tRange'])==2:
+                raise Exception('Output "tRange" expected to be 2-tuple')
+        elif output['type']=='psd':
+            output['tRange'] = [0, config['TR']]
+        else:
+            output['tRange'] = [0, config['nTR'] * config['TR']]
         if 'dpi' not in output:
             output['dpi'] = 100
+        if 'freeze' not in output:
+            output['freeze'] = []
+        elif not isinstance(output['freeze'], list):
+            output['freeze'] = [output['freeze']]
         if output['type']=='3D':
             if 'drawAxes' not in output:
                 output['drawAxes'] = config['nx']*config['ny']*config['nz'] == 1
@@ -1251,7 +1294,7 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
             colors[i][:3] = list(map(lambda x: 1-x, colors[i][:3]))
 
     ### Simulate ###
-    vectors = np.empty((config['nx'],config['ny'],config['nz'],config['nComps'],config['nIsochromats'],3,len(config['t'])))
+    vectors = np.empty((config['nx'],config['ny'],config['nz'],config['nComps'],config['nIsochromats'],6,len(config['t'])))
     for z in range(config['nz']):
         for y in range(config['ny']):
             for x in range(config['nx']):
@@ -1274,10 +1317,10 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                         M0 = spherical2cartesian(config['M0'][z][y][x])
                     else:
                         M0 = None
-                    xpos = (x+.5-config['nx']/2)*config['locSpacing']
-                    ypos = (y+.5-config['ny']/2)*config['locSpacing']
-                    zpos = (z+.5-config['nz']/2)*config['locSpacing']
-                    vectors[x,y,z,c,:,:,:] = simulateComponent(config, component, Meq, M0, xpos, ypos, zpos)
+                    pos = [(x+.5-config['nx']/2)*config['locSpacing'],
+                           (y+.5-config['ny']/2)*config['locSpacing'],
+                           (z+.5-config['nz']/2)*config['locSpacing']]
+                    vectors[x,y,z,c,:,:,:] = simulateComponent(config, component, Meq, M0, pos)
 
     ### Animate ###
     getText(config) # prepare text flashes for 3D plot
@@ -1289,7 +1332,7 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
     for output in config['output']:
         if output['file']:
             if output['type'] in ['xy', 'z']:
-                signal = np.sum(vectors, (0,1,2,4)) # sum over space and isochromats
+                signal = np.sum(vectors[:,:,:,:,:,:3,:], (0,1,2,4)) # sum over space and isochromats
                 if 'normalize' in output and output['normalize']:
                     for c, comp in enumerate([n['name'] for n in config['components']]):
                         signal[c,:] /= np.sum(config['locations'][comp])
@@ -1309,8 +1352,12 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                 os.makedirs(tmpdir, exist_ok=True)
             os.makedirs(outdir, exist_ok=True)
             outfile = os.path.join(outdir, output['file'])
-            if gifWriter == 'static':
-                frame = len(config['tFrames']) - 1
+            
+            output['freezeFrames'] = []
+            for t in output['freeze']:
+                output['freezeFrames'].append(np.argmin(np.abs(config['tFrames'] - t)))
+            for frame in range(0, len(config['tFrames']), leapFactor):
+                # Use only every leapFactor frame in animation
                 if output['type'] == '3D':
                     fig = plotFrame3D(config, vectors, frame, output)
                 elif output['type'] == 'kspace':
@@ -1320,40 +1367,28 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                 elif output['type'] in ['xy', 'z']:
                     fig = plotFrameMT(config, signal, frame, output)
                 plt.draw()
-                if outfile[-4:] == '.gif':
-                    file = outfile[:-4] + '.png'
-                elif outfile[-4:] == '.png':
-                    file = outfile
-                else:
-                    file = outfile + '.png'
-                plt.savefig(file, facecolor=plt.gcf().get_facecolor())
-                plt.close()
-            else:
-                for frame in range(0, len(config['tFrames']), leapFactor):
-                    # Use only every leapFactor frame in animation
-                    if output['type'] == '3D':
-                        fig = plotFrame3D(config, vectors, frame, output)
-                    elif output['type'] == 'kspace':
-                        fig = plotFrameKspace(config, frame, output)
-                    elif output['type'] == 'psd':
-                        fig = plotFramePSD(config, frame, output)
-                    elif output['type'] in ['xy', 'z']:
-                        fig = plotFrameMT(config, signal, frame, output)
-                    plt.draw()
-                    if gifWriter == 'ffmpeg':
-                        ffmpegWriter.addFrame(fig)
-                    else:  # use imagemagick: save frames temporarily
-                        file = os.path.join(tmpdir, '{}.png'.format(str(frame).zfill(4)))
-                        print('Saving frame {}/{} as "{}"'.format(frame+1, config['nFrames'], file))
-                        plt.savefig(file, facecolor=plt.gcf().get_facecolor())
-                    plt.close()
+
+                filesToSave = []
+                if frame in output['freezeFrames']:
+                    filesToSave.append('{}_{}.png'.format('.'.join(outfile.split('.')[:-1]), str(frame).zfill(4)))
+
                 if gifWriter == 'ffmpeg':
-                    ffmpegWriter.write(outfile)
-                else: # use imagemagick
-                    print('Creating animated gif "{}"'.format(outfile))
-                    compress = '-layers Optimize'
-                    os.system(('convert {} -delay {} {}/*png {}'.format(compress, delay, tmpdir, outfile)))
-                    shutil.rmtree(tmpdir)
+                    ffmpegWriter.addFrame(fig)
+                else: # use imagemagick: save frames temporarily 
+                    filesToSave.append(os.path.join(tmpdir, '{}.png'.format(str(frame).zfill(4))))
+                
+                for file in filesToSave:
+                    print('Saving frame {}/{} as "{}"'.format(frame+1, len(config['tFrames']), file))
+                    plt.savefig(file, facecolor=plt.gcf().get_facecolor())
+
+                plt.close()
+            if gifWriter == 'ffmpeg':
+                ffmpegWriter.write(outfile)
+            else: # use imagemagick
+                print('Creating animated gif "{}"'.format(outfile))
+                compress = '-layers Optimize'
+                os.system(('convert {} -delay {} {}/*png {}'.format(compress, delay, tmpdir, outfile)))
+                shutil.rmtree(tmpdir)
 
 
 def parseAndRun():

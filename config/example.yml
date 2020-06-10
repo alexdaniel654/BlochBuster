@@ -1,58 +1,62 @@
 title: Example config
 pulseSeq:
-    - t: 2
-      FA: 45
-      dur: 0.1
-    - t: 5
-      dur: 1
-      B1: 
-        amp: [ 1,  2,  4, 8, 16, 8,   4,   2,   1]
-        phase: [90, 60, 30, 0,  0, 0, -30, -60, -90]
-    - t: 10
-      dur: 4
-      FA: 180
-      B1: 'RF/ref.yml'
-      Gz: 5
-      phase: 270
-    - t: 15
-      dur: 5
-      Gx: 10
-      Gy: 10
-    - t: 23
-      spoil: true
+  - t: 2
+    FA: 45
+    dur: 0.1
+  - t: 5
+    dur: 1
+    B1: 
+      amp: [ 1,  2,  4, 8, 16, 8,   4,   2,   1]
+      phase: [90, 60, 30, 0,  0, 0, -30, -60, -90]
+  - t: 10
+    dur: 4
+    FA: 180
+    B1: 'RF/ref.yml'
+    Gz: 5
+    phase: 270
+  - t: 15
+    dur: 5
+    Gx: 10
+    Gy: 10
+  - t: 23
+    spoil: true
 TR: 25
-nTR: 2 
+nTR: 2
+nDummies: 1
 B0: 3.0 
 components:
-    - name: "tissue #1"
-      CS: 0.0
-      T1: 1000.0
-      T2: 100.0
-    - name: "tissue #2"
-      CS: 3.4
-      T1: 300.0
-      T2: 80.0
+  - name: "tissue #1"
+    CS: 0.0
+    T1: 1000.0
+    T2: 100.0
+    Dx: 0.1
+  - name: "tissue #2"
+    CS: 3.4
+    T1: 300.0
+    T2: 80.0
+    vy: 10.0
+    color: [.8, .1, .2]
 locations:
   "tissue #1":
-    [[[0,   0,   0  ], 
-      [0.5, 0.5, 0  ], 
-      [0.5, 0.5, 0.5]]]
+    [[[.00, .00, .00], 
+      [.85, .85, .00], 
+      [.85, .85, .85]]]
   "tissue #2":
-    [[[0.5, 0.5, 0.5], 
-      [0,   0,   0.5], 
-      [0,   0,   0  ]]]
+    [[[.85, .85, .85], 
+      [.00, .00, .85], 
+      [.00, .00, .00]]]
 M0:
   "tissue #1":
-    [[[0,0,0], [0,0,0], [0,0,0]],
-     [[.5,0,0], [.5,0,0], [0,0,0]],
-     [[.5,0,0], [.5,0,0], [.5,0,0]]]
+    [[[.00,.00,.00], [.00,.00,.00], [.00,.00,.00]],
+     [[.85,.00,.00], [.85,.00,.00], [.00,.00,.00]],
+     [[.85,.00,.00], [.85,.00,.00], [.85,.00,.00]]]
   "tissue #2":
-    [[[.5,0,0], [.5,0,0], [.5,0,0]],
-     [[0,0,0], [0,0,0], [.5,0,0]],
-     [[0,0,0], [0,0,0], [0,0,0]]]
+    [[[.85,.00,.00], [.85,.00,.00], [.85,.00,.00]],
+     [[.00,.00,.00], [.00,.00,.00], [.85,.00,.00]],
+     [[.00,.00,.00], [.00,.00,.00], [.00,.00,.00]]]
 locSpacing: 0.001
-nIsochromats: 20
-isochromatStep: 0.01
+nIsochromats: 5
+isochromatStep: 0.02
 speed: 
   - t: 0
     speed: 0.003
@@ -68,9 +72,12 @@ output:
     file: example_3D.gif
     drawAxes: False
     dpi: 100
+    rotate: 150
+    freeze: [20.0]
   - type: xy
     abs: true
     normalize: False
+    tRange: [2, 25]
     file: example_xy_abs.gif
   - type: xy
     abs: false
@@ -80,6 +87,7 @@ output:
     scale: 0.9
     file: example_z.gif
   - type: psd
+    gmax: 12
     file: example_psd.gif
   - type: kspace
     file: example_kspace.gif

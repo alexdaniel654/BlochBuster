@@ -27,41 +27,48 @@ RF pulses and gradient waveforms may be specified in separate yaml-files.
 The "pulseSeq" field is a list of events such as RF pulses, gradients or spoiling. 
 Each event happens at given time "t" [msec] with duration "dur" [msec].
 An RF event may have a "FA" denoting the prescribed flip angle, and/or a "B1" vector [&mu;T] that determines the RF waveform played over the duration of the event. 
-The waveform may be provided as a struct with fields "amp" [&mu;T] and optionally "phase" [degrees] for phase modulated pulses. 
+The waveform may be provided as a struct with fields "amp" [&mu;T] and optionally "phase" [°] for phase modulated pulses. 
 If no B1 is provided, a hard pulse is assumed.
-Optionally, the global phase of the RF pulse can be altered by specifying a "phase" [degrees] in the pulse sequence event.
+Optionally, the global phase of the RF pulse can be altered by specifying a "phase" [°] in the pulse sequence event.
 
 A gradient event is specified by "Gx", "Gy", and/or "Gz" [mT/m]. 
 These may be given as vectors, enabling arbitrary waveforms.
 A graident may be played together with an RF-pulse, if "Gx", "Gy", and/or "Gz" are specified in the RF event.
-A spoiler event is indicated by "spoil: true", and spoils all transverse magnetization. 
+A spoiler event is indicated by "spoil: true", and magically spoils all transverse magnetization. 
 
 B1, Gx, Gy, and Gy may be loaded from a yaml file by providing the filename as a string. 
 The file should contain the waveform as a list, or B1 at keys 'amp' and/or 'phase' as lists and G as a list at key 'grad'.
 
-The pulse sequence repeats after "TR" msec, with "nTR" repetitions. The main field "B0" is given in T.
+The pulse sequence repeats after "TR" msec, with "nTR" repetitions. "nDummies" may be used to play dummy TR:s before the plotted TR:s to achieve a steady state.
+
+The main field "B0" is given in T.
 
 The "components" field is a list of components/tissues, each represented by a magnetization vector with a distinct color in the plot. 
-Each components "name" will be printed in the legend. 
+Each component's "name" will be printed in the legend. 
 "CS" is chemical shift in ppm; "T1" and "T2" are relaxation times in msec. 
+A components may have a velocity specified by "vx"/"vy"/"vz" [mm/sec] and diffusion specified by "Dx"/"Dy"/"Dz" [mm^2/sec].
+
 Each component may be represented by a fan of "nIsochromats" vectors, with a distribution of precession frequencies determined by "isochromatStep" [ppm].
 
 The optional "locations" field should contain a 3D matrix, indicating the equilibrium magnetization at different spatial positions.
-One matrix can be given for each components, but their shapes must match.
+One matrix can be given for each component, but their shapes must match.
+The spacing between positions can be specified by "locSpacing" [m] (defaults to 1 mm).
 
-If an initial state other than equilibrium is desired, it can be specified in the "M0" field by a matrix matching the shape of "locations" with an additional inner dimension of size 3 representing vector length, polar angle [degrees], and azimuthal angle [degrees].
+If an initial state other than equilibrium is desired, it can be specified in the "M0" field by a matrix matching the shape of "locations" with an additional inner dimension of size 3 representing vector length, polar angle [°], and azimuthal angle [°].
 
 White background can be toggled by setting "color: white" under the "background" field.
 
 The animation speed is determined by the "speed" field, where 1 corresponds to real-time. Varying animation speed over the TR can be achieved by providing "speed" as a list where each element has field "t" [msec] and "speed". The maximum animation speed of RF pulses can be controlled by the "maxRFspeed" field (default is 0.001).
 
 The output is specified by a list, where the "type" can be:
-- 3D: animated 3D plot of the magnetization vectors
+- 3D: animated 3D plot of the magnetization vectors. The coordinate system may rotate relative to the resonance frequency by specifying "rotate" in [Hz]
 - kspace: animated plot of kspace position
 - psd: events plotted as a pulse sequence diagram
 - xy: animated plot of transverse magnetization over time. If "abs: false", both real and imaginary components are plotted.
 - z: animated plot of transverse magnetization over time
-The filename is specified by "file". The file ending can be .gif, .mp4 or .png if `gifWriter` is `'static'`.
+
+The filename is specified by "file". The file ending can be .gif or .mp4.
+Freeze frames can be saved as .png by specifying "freeze" as a list of desired time points [msec].
 
 HOW TO USE
 ----------
