@@ -91,3 +91,5 @@ output:
     file: example_psd.gif
   - type: kspace
     file: example_kspace.gif
+  - type: raw
+    file: example_raw_data.npy

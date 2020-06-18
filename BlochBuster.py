@@ -404,6 +404,16 @@ def plotFramePSD(config, frame, output):
     fig.canvas.draw()
     return fig
 
+def saveRawData(vectors, outfile):
+    '''Saves raw vector information as a numpy array.
+
+    Args:
+        config: configuration dictionary.
+        outfile: path to output file.
+    '''
+    print('Saving raw vectors as {}'.format(outfile))
+    np.save(outfile, vectors)
+
 
 # Apply spoiling of the transversal magnetization
 def spoil(M):
@@ -1329,64 +1339,68 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
     outdir = './out'
     for output in config['output']:
         if output['file']:
-            if output['type'] in ['xy', 'z']:
-                signal = np.sum(vectors[:,:,:,:,:,:3,:], (0,1,2,4)) # sum over space and isochromats
-                if 'normalize' in output and output['normalize']:
-                    for c, comp in enumerate([n['name'] for n in config['components']]):
-                        signal[c,:] /= np.sum(config['locations'][comp])
-                signal /= np.max(np.abs(signal)) # scale signal relative to maximum
-                if 'scale' in output:
-                    signal *= output['scale']
-            if gifWriter == 'ffmpeg':
-                ffmpegWriter = FFMPEGwriter.FFMPEGwriter(config['fps'])
-            else:
-                tmpdir = './tmp'
-                if os.path.isdir(tmpdir):
-                    rmTmpDir = input('Temporary folder "{}" already exists. Delete(Y/N)?'.format(tmpdir))
-                    if rmTmpDir.upper() == 'Y':
-                        shutil.rmtree(tmpdir)
-                    else:
-                        raise Exception('No files written.')
-                os.makedirs(tmpdir, exist_ok=True)
             os.makedirs(outdir, exist_ok=True)
             outfile = os.path.join(outdir, output['file'])
-
-            output['freezeFrames'] = []
-            for t in output['freeze']:
-                output['freezeFrames'].append(np.argmin(np.abs(config['tFrames'] - t)))
-            for frame in range(0, len(config['tFrames']), leapFactor):
-                # Use only every leapFactor frame in animation
-                if output['type'] == '3D':
-                    fig = plotFrame3D(config, vectors, frame, output)
-                elif output['type'] == 'kspace':
-                    fig = plotFrameKspace(config, frame, output)
-                elif output['type'] == 'psd':
-                    fig = plotFramePSD(config, frame, output)
-                elif output['type'] in ['xy', 'z']:
-                    fig = plotFrameMT(config, signal, frame, output)
-                plt.draw()
-
-                filesToSave = []
-                if frame in output['freezeFrames']:
-                    filesToSave.append('{}_{}.png'.format('.'.join(outfile.split('.')[:-1]), str(frame).zfill(4)))
-
+            if output['type'] != 'raw':
+                if output['type'] in ['xy', 'z']:
+                    signal = np.sum(vectors[:,:,:,:,:,:3,:], (0,1,2,4)) # sum over space and isochromats
+                    if 'normalize' in output and output['normalize']:
+                        for c, comp in enumerate([n['name'] for n in config['components']]):
+                            signal[c,:] /= np.sum(config['locations'][comp])
+                    signal /= np.max(np.abs(signal)) # scale signal relative to maximum
+                    if 'scale' in output:
+                        signal *= output['scale']
                 if gifWriter == 'ffmpeg':
-                    ffmpegWriter.addFrame(fig)
-                else: # use imagemagick: save frames temporarily
-                    filesToSave.append(os.path.join(tmpdir, '{}.png'.format(str(frame).zfill(4))))
-
-                for file in filesToSave:
-                    print('Saving frame {}/{} as "{}"'.format(frame+1, len(config['tFrames']), file))
-                    plt.savefig(file, facecolor=plt.gcf().get_facecolor())
-
-                plt.close()
-            if gifWriter == 'ffmpeg':
-                ffmpegWriter.write(outfile)
-            else: # use imagemagick
-                print('Creating animated gif "{}"'.format(outfile))
-                compress = '-layers Optimize'
-                os.system(('convert {} -delay {} {}/*png {}'.format(compress, delay, tmpdir, outfile)))
-                shutil.rmtree(tmpdir)
+                    ffmpegWriter = FFMPEGwriter.FFMPEGwriter(config['fps'])
+                else:
+                    tmpdir = './tmp'
+                    if os.path.isdir(tmpdir):
+                        rmTmpDir = input('Temporary folder "{}" already exists. Delete(Y/N)?'.format(tmpdir))
+                        if rmTmpDir.upper() == 'Y':
+                            shutil.rmtree(tmpdir)
+                        else:
+                            raise Exception('No files written.')
+                    os.makedirs(tmpdir, exist_ok=True)
+    
+                output['freezeFrames'] = []
+                for t in output['freeze']:
+                    output['freezeFrames'].append(np.argmin(np.abs(config['tFrames'] - t)))
+                for frame in range(0, len(config['tFrames']), leapFactor):
+                    # Use only every leapFactor frame in animation
+                    if output['type'] == '3D':
+                        fig = plotFrame3D(config, vectors, frame, output)
+                    elif output['type'] == 'kspace':
+                        fig = plotFrameKspace(config, frame, output)
+                    elif output['type'] == 'psd':
+                        fig = plotFramePSD(config, frame, output)
+                    elif output['type'] in ['xy', 'z']:
+                        fig = plotFrameMT(config, signal, frame, output)
+                    plt.draw()
+    
+                    filesToSave = []
+                    if frame in output['freezeFrames']:
+                        filesToSave.append('{}_{}.png'.format('.'.join(outfile.split('.')[:-1]), str(frame).zfill(4)))
+    
+                    if gifWriter == 'ffmpeg':
+                        ffmpegWriter.addFrame(fig)
+                    else: # use imagemagick: save frames temporarily
+                        filesToSave.append(os.path.join(tmpdir, '{}.png'.format(str(frame).zfill(4))))
+    
+                    for file in filesToSave:
+                        print('Saving frame {}/{} as "{}"'.format(frame+1, len(config['tFrames']), file))
+                        plt.savefig(file, facecolor=plt.gcf().get_facecolor())
+    
+                    plt.close()
+                if gifWriter == 'ffmpeg':
+                    ffmpegWriter.write(outfile)
+                else: # use imagemagick
+                    print('Creating animated gif "{}"'.format(outfile))
+                    compress = '-layers Optimize'
+                    os.system(('convert {} -delay {} {}/*png {}'.format(compress, delay, tmpdir, outfile)))
+                    shutil.rmtree(tmpdir)
+            
+            elif output['type'] == 'raw':
+                saveRawData(vectors, outfile)
 
 
 def parseAndRun():
