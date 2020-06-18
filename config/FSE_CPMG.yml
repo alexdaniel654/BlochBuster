@@ -13,7 +13,7 @@ pulseSeq:
     FA: 180
     B1: 'RF/ref.yml'
     dur: 3
-    phase: 90
+    phase: -90
   - t: 50
     FA: 180
     B1: 'RF/ref.yml'
@@ -23,12 +23,56 @@ pulseSeq:
     FA: 180
     B1: 'RF/ref.yml'
     dur: 3
+    phase: -90
+  - t: 90
+    FA: 180
+    B1: 'RF/ref.yml'
+    dur: 3
     phase: 90
-TR: 130
-B0: 1.5
-nIsochromats: 30
-isochromatStep: 0.02
+  - t: 110
+    FA: 180
+    B1: 'RF/ref.yml'
+    dur: 3
+    phase: -90
+  - t: 130
+    FA: 180
+    B1: 'RF/ref.yml'
+    dur: 3
+    phase: 90
+  - t: 150
+    FA: 180
+    B1: 'RF/ref.yml'
+    dur: 3
+    phase: -90
+TR: 200
+B0: 3
+components:
+    - T1: 700
+      T2: 70
+nIsochromats: 20
+isochromatStep: 0.005
 speed: 0.01
+background:
+  color: white
 output:
   - type: 3D
     file: FSE_CPMG_3D.gif
+    dpi: 150
+  - type: xy
+    abs: true
+    normalize: False
+    freeze: [300.0]
+    dpi: 150
+    file: FSE_CPMG_xy_abs.gif
+  - type: xy
+    abs: false
+    freeze: [300.0]
+    dpi: 150
+    file: FSE_CPMG_xy.gif
+  - type: z
+    freeze: [300.0]
+    dpi: 150
+    file: FSE_CPMG_z.gif
+  - type: psd
+    dpi: 150
+    file: FSE_CPMG_psd.gif

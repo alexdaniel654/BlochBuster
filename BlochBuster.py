@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-BlochBuster is a nuclear magnetic resonance Bloch equation simulator written in Python. 
-It simulates magnetization vectors based on the Bloch equations, including precession, relaxation, and excitation. 
+BlochBuster is a nuclear magnetic resonance Bloch equation simulator written in Python.
+It simulates magnetization vectors based on the Bloch equations, including precession, relaxation, and excitation.
 BlochBuster outputs animated gif or mp4 files, which can be 3D plots of the magnetization vectors, plots of transverse and longitudinal magnetization, or pulse sequence diagrams.
 Input paramaters are provided by human readable configuration files.
 The animations are made using ffmpeg.
@@ -27,7 +27,6 @@ The animations are made using ffmpeg.
 import mpl_toolkits.mplot3d.art3d as art3d
 from mpl_toolkits.mplot3d import proj3d
 import matplotlib
-
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle
@@ -42,31 +41,30 @@ import argparse
 import yaml
 import FFMPEGwriter
 
-colors = {'bg': [1, 1, 1],
-          'circle': [0, 0, 0, .03],
-          'axis': [.5, .5, .5],
-          'text': [.05, .05, .05],
-          'spoilText': [.5, 0, 0],
-          'RFtext': [0, .5, 0],
-          'Gtext': [80 / 256, 80 / 256, 0],
-          'comps': [[.3, .5, .2],
-                    [.1, .4, .5],
-                    [.5, .3, .2],
-                    [.5, .4, .1],
-                    [.4, .1, .5],
-                    [.6, .1, .3]],
-          'boards': {'w1': [.5, 0, 0],
-                     'Gx': [0, .5, 0],
-                     'Gy': [0, .5, 0],
-                     'Gz': [0, .5, 0]
-                     },
-          'kSpacePos': [1, .5, 0]
-          }
 
+colors = {  'bg':       [1,1,1],
+            'circle':   [0,0,0,.03],
+            'axis':     [.5,.5,.5],
+            'text':     [.05,.05,.05],
+            'spoilText':[.5,0,0],
+            'RFtext':   [0,.5,0],
+            'Gtext':    [80/256,80/256,0],
+            'comps': [  [.3,.5,.2],
+                        [.1,.4,.5],
+                        [.5,.3,.2],
+                        [.5,.4,.1],
+                        [.4,.1,.5],
+                        [.6,.1,.3]],
+            'boards': { 'w1': [.5,0,0],
+                        'Gx': [0,.5,0],
+                        'Gy': [0,.5,0],
+                        'Gz': [0,.5,0]
+                        },
+            'kSpacePos': [1, .5, 0]
+            }
 
 class Arrow3D(FancyArrowPatch):
     '''Matplotlib FancyArrowPatch for 3D rendering.'''
-
     def __init__(self, xs, ys, zs, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
         self._verts3d = xs, ys, zs
@@ -94,33 +92,32 @@ def plotFrame3D(config, vectors, frame, output):
     nx, ny, nz, nComps, nIsoc = vectors.shape[:5]
 
     # Create 3D axes
-    if nx * ny * nz == 1 or config['collapseLocations']:
-        aspect = .952  # figure aspect ratio
-    elif nz == 1 and ny == 1 and nx > 1:
+    if nx*ny*nz==1 or config['collapseLocations']:
+        aspect = .952 # figure aspect ratio
+    elif nz==1 and ny==1 and nx>1:
         aspect = 0.6
-    elif nz == 1 and nx > 1 and ny > 1:
+    elif nz==1 and nx>1 and ny>1:
         aspect = .75
     else:
         aspect = 1
-    figSize = 5  # figure size in inches
+    figSize = 5 # figure size in inches
     canvasWidth = figSize
-    canvasHeight = figSize * aspect
+    canvasHeight = figSize*aspect
     fig = plt.figure(figsize=(canvasWidth, canvasHeight), dpi=output['dpi'])
-    axLimit = max(nx, ny, nz) / 2 + .5
+    axLimit = max(nx,ny,nz)/2+.5
     if config['collapseLocations']:
         axLimit = 1.0
-    ax = fig.gca(projection='3d', xlim=(-axLimit, axLimit), ylim=(-axLimit, axLimit), zlim=(-axLimit, axLimit),
-                 fc=colors['bg'])
+    ax = fig.gca(projection='3d', xlim=(-axLimit,axLimit), ylim=(-axLimit,axLimit), zlim=(-axLimit,axLimit), fc=colors['bg'])
 
-    if nx * ny * nz > 1 and not config['collapseLocations']:
-        azim = -78  # azimuthal angle of x-y-plane
-        ax.view_init(azim=azim)  # ax.view_init(azim=azim, elev=elev)
+    if nx*ny*nz>1 and not config['collapseLocations']:
+        azim = -78 # azimuthal angle of x-y-plane
+        ax.view_init(azim=azim) #ax.view_init(azim=azim, elev=elev)
     ax.set_axis_off()
-    width = 1.65  # to get tight cropping
-    height = width / aspect
-    left = (1 - width) / 2
-    bottom = (1 - height) / 2
-    if nx * ny * nz == 1 or config['collapseLocations']:  # shift to fit legend
+    width = 1.65 # to get tight cropping
+    height = width/aspect
+    left = (1-width)/2
+    bottom = (1-height)/2
+    if nx*ny*nz==1 or config['collapseLocations']: # shift to fit legend
         left += .035
         bottom += -.075
     else:
@@ -143,21 +140,20 @@ def plotFrame3D(config, vectors, frame, output):
         ax.text(0, 0, 1.05, r'$z$', horizontalalignment='center', color=colors['text'])
 
     # Draw title:
-    fig.text(.5, 1, config['title'], fontsize=14, horizontalalignment='center', verticalalignment='top',
-             color=colors['text'])
+    fig.text(.5, 1, config['title'], fontsize=14, horizontalalignment='center', verticalalignment='top', color=colors['text'])
 
     # Draw time
-    time = config['tFrames'][frame % (len(config['t']) - 1)]  # frame time [msec]
+    time = config['tFrames'][frame%(len(config['t'])-1)] # frame time [msec]
     time_text = fig.text(0, 0, 'time = %.1f msec' % (time), color=colors['text'], verticalalignment='bottom')
 
     # TODO: put isochromats in this order from start
-    order = [int((nIsoc - 1) / 2 - abs(m - (nIsoc - 1) / 2)) for m in range(nIsoc)]
-    thres = 0.075 * axLimit  # threshold on vector magnitude for shrinking
+    order = [int((nIsoc-1)/2-abs(m-(nIsoc-1)/2)) for m in range(nIsoc)]
+    thres = 0.075*axLimit # threshold on vector magnitude for shrinking
     if 'rotate' in output:
-        rotFreq = output['rotate'] * 1e-3  # coordinate system rotation relative resonance frequency [kHz]
-        rotMat = rotMatrix(2 * np.pi * rotFreq * time, 2)  # rotation matrix for rotating coordinate system
+        rotFreq = output['rotate'] * 1e-3 # coordinate system rotation relative resonance frequency [kHz]
+        rotMat = rotMatrix(2 * np.pi * rotFreq * time, 2) # rotation matrix for rotating coordinate system
 
-    pos = [0, 0, 0]
+    pos = [0,0,0]
 
     # Draw magnetization vectors
     for z in range(nz):
@@ -166,44 +162,43 @@ def plotFrame3D(config, vectors, frame, output):
                 for c in range(nComps):
                     for m in range(nIsoc):
                         col = colors['comps'][(c) % len(colors['comps'])]
-                        M = vectors[x, y, z, c, m, :3, frame]
+                        M = vectors[x,y,z,c,m,:3,frame]
                         if not config['collapseLocations']:
-                            pos = vectors[x, y, z, c, m, 3:, frame] / config['locSpacing']
+                            pos = vectors[x,y,z,c,m,3:,frame]/config['locSpacing']
                         if 'rotate' in output:
-                            M = np.dot(M, rotMat)  # rotate vector relative to coordinate system
+                            M = np.dot(M, rotMat) # rotate vector relative to coordinate system
                         Mnorm = np.linalg.norm(M)
-                        alpha = 1. - 2 * np.abs((m + .5) / nIsoc - .5)
-                        if Mnorm > thres:
+                        alpha = 1.-2*np.abs((m+.5)/nIsoc-.5)
+                        if Mnorm>thres:
                             arrowScale = 20
                         else:
-                            arrowScale = 20 * Mnorm / thres  # Shrink arrowhead close to origo
-                        ax.add_artist(Arrow3D([pos[0], pos[0] + M[0]],
-                                              [-pos[1], -pos[1] + M[1]],
-                                              [-pos[2], -pos[2] + M[2]],
-                                              mutation_scale=arrowScale,
-                                              arrowstyle='-|>', shrinkA=0, shrinkB=0, lw=2,
-                                              color=col, alpha=alpha,
-                                              zorder=order[m] + nIsoc * int(100 * (1 - Mnorm))))
+                            arrowScale = 20*Mnorm/thres # Shrink arrowhead close to origo
+                        ax.add_artist(Arrow3D(  [pos[0], pos[0]+M[0]],
+                                                [-pos[1], -pos[1]+M[1]],
+                                                [-pos[2], -pos[2]+M[2]],
+                                                mutation_scale=arrowScale,
+                                                arrowstyle='-|>', shrinkA=0, shrinkB=0, lw=2,
+                                                color=col, alpha=alpha,
+                                                zorder=order[m]+nIsoc*int(100*(1-Mnorm))))
 
     # Draw "spoiler" and "FA-pulse" text
     fig.text(1, .94, config['RFtext'][frame], fontsize=14, alpha=config['RFalpha'][frame],
-             color=colors['RFtext'], horizontalalignment='right', verticalalignment='top')
+            color=colors['RFtext'], horizontalalignment='right', verticalalignment='top')
     fig.text(1, .88, config['Gtext'][frame], fontsize=14, alpha=config['Galpha'][frame],
-             color=colors['Gtext'], horizontalalignment='right', verticalalignment='top')
+            color=colors['Gtext'], horizontalalignment='right', verticalalignment='top')
     fig.text(1, .82, config['spoiltext'], fontsize=14, alpha=config['spoilAlpha'][frame],
-             color=colors['spoilText'], horizontalalignment='right', verticalalignment='top')
+            color=colors['spoilText'], horizontalalignment='right', verticalalignment='top')
 
     # Draw legend:
     for c in range(nComps):
         col = colors['comps'][(c) % len(colors['comps'])]
         ax.plot([0, 0], [0, 0], [0, 0], '-', lw=2, color=col, alpha=1.,
-                label=config['components'][c]['name'])
+                    label=config['components'][c]['name'])
     handles, labels = ax.get_legend_handles_labels()
     leg = fig.legend([plt.Line2D((0, 1), (0, 0), lw=2, color=colors['comps'][(c) %
-                                                                             len(colors['comps'])]) for c, handle in
-                      enumerate(
-                          handles)], labels, loc=2, bbox_to_anchor=[
-        -.025, .94])
+                                len(colors['comps'])]) for c, handle in enumerate(
+                                handles)], labels, loc=2, bbox_to_anchor=[
+                                -.025, .94])
     leg.draw_frame(False)
     for text in leg.get_texts():
         text.set_color(colors['text'])
@@ -248,7 +243,7 @@ def plotFrameMT(config, signal, frame, output):
         if 'abs' in output and not output['abs']:
             ax.xaxis.set_label_coords(1.1, .475)
             plt.ylabel('$M_x, M_y$', rotation=0, color=colors['text'])
-        else:  # absolute value of transversal magnetization
+        else: # absolute value of transversal magnetization
             ax.xaxis.set_label_coords(1.1, .1)
             plt.ylabel('$|M_{xy}|$', rotation=0, color=colors['text'])
     elif output['type'] == 'z':
@@ -263,42 +258,38 @@ def plotFrameMT(config, signal, frame, output):
     # draw x and y axes as arrows
     bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     width, height = bbox.width, bbox.height  # get width and height of axes object
-    hw = 1 / 25 * (ymax - ymin)  # manual arrowhead width and length
-    hl = 1 / 25 * (xmax - xmin)
-    yhw = hw / (ymax - ymin) * (xmax - xmin) * height / width  # compute matching arrowhead length and width
-    yhl = hl / (xmax - xmin) * (ymax - ymin) * width / height
-    ax.arrow(xmin, 0, (xmax - xmin) * 1.05, 0, fc=colors['text'], ec=colors['text'], lw=1, head_width=hw,
-             head_length=hl, clip_on=False, zorder=100)
-    ax.arrow(xmin, ymin, 0, (ymax - ymin) * 1.05, fc=colors['text'], ec=colors['text'], lw=1, head_width=yhw,
-             head_length=yhl, clip_on=False, zorder=100)
+    hw = 1/25*(ymax-ymin)  # manual arrowhead width and length
+    hl = 1/25*(xmax-xmin)
+    yhw = hw/(ymax-ymin)*(xmax-xmin) * height/width  # compute matching arrowhead length and width
+    yhl = hl/(xmax-xmin)*(ymax-ymin) * width/height
+    ax.arrow(xmin, 0, (xmax-xmin)*1.05, 0, fc=colors['text'], ec=colors['text'], lw=1, head_width=hw, head_length=hl, clip_on=False, zorder=100)
+    ax.arrow(xmin, ymin, 0, (ymax-ymin)*1.05, fc=colors['text'], ec=colors['text'], lw=1, head_width=yhw, head_length=yhl, clip_on=False, zorder=100)
 
     # Draw magnetization vectors
     nComps = signal.shape[0]
     if output['type'] == 'xy':
         for c in range(nComps):
             col = colors['comps'][c % len(colors['comps'])]
-            if 'abs' in output and not output['abs']:  # real and imag part of transversal magnetization
-                ax.plot(config['tFrames'][:frame + 1], signal[c, 0, :frame + 1], '-', lw=2, color=col)
-                col = colors['comps'][c + nComps + 1 % len(colors['comps'])]
-                ax.plot(config['tFrames'][:frame + 1], signal[c, 1, :frame + 1], '-', lw=2, color=col)
-            else:  # absolute value of transversal magnetization
-                ax.plot(config['tFrames'][:frame + 1], np.linalg.norm(signal[c, :2, :frame + 1], axis=0), '-', lw=2,
-                        color=col)
+            if 'abs' in output and not output['abs']: # real and imag part of transversal magnetization
+                ax.plot(config['tFrames'][:frame+1], signal[c,0,:frame+1], '-', lw=2, color=col)
+                col = colors['comps'][c+nComps+1 % len(colors['comps'])]
+                ax.plot(config['tFrames'][:frame+1], signal[c,1,:frame+1], '-', lw=2, color=col)
+            else: # absolute value of transversal magnetization
+                ax.plot(config['tFrames'][:frame+1], np.linalg.norm(signal[c,:2,:frame+1], axis=0), '-', lw=2, color=col)
         # plot sum component if both water and fat (special case)
         if all(key in [comp['name'] for comp in config['components']] for key in ['water', 'fat']):
             col = colors['comps'][nComps % len(colors['comps'])]
-            if 'abs' in output and not output['abs']:  # real and imag part of transversal magnetization
-                ax.plot(config['tFrames'][:frame + 1], np.mean(signal[:, 0, :frame + 1], 0), '-', lw=2, color=col)
-                col = colors['comps'][2 * nComps + 1 % len(colors['comps'])]
-                ax.plot(config['tFrames'][:frame + 1], np.mean(signal[:, 1, :frame + 1], 0), '-', lw=2, color=col)
-            else:  # absolute value of transversal magnetization
-                ax.plot(config['tFrames'][:frame + 1], np.linalg.norm(np.mean(signal[:, :2, :frame + 1], 0), axis=0),
-                        '-', lw=2, color=col)
+            if 'abs' in output and not output['abs']: # real and imag part of transversal magnetization
+                ax.plot(config['tFrames'][:frame+1], np.mean(signal[:,0,:frame+1],0), '-', lw=2, color=col)
+                col = colors['comps'][2*nComps+1 % len(colors['comps'])]
+                ax.plot(config['tFrames'][:frame+1], np.mean(signal[:,1,:frame+1],0), '-', lw=2, color=col)
+            else: # absolute value of transversal magnetization
+                ax.plot(config['tFrames'][:frame+1], np.linalg.norm(np.mean(signal[:,:2,:frame+1],0), axis=0), '-', lw=2, color=col)
 
     elif output['type'] == 'z':
         for c in range(nComps):
             col = colors['comps'][(c) % len(colors['comps'])]
-            ax.plot(config['tFrames'][:frame + 1], signal[c, 2, :frame + 1], '-', lw=2, color=col)
+            ax.plot(config['tFrames'][:frame+1], signal[c,2,:frame+1], '-', lw=2, color=col)
 
     return fig
 
@@ -315,8 +306,8 @@ def plotFrameKspace(config, frame, output):
         plot figure.
 
     '''
-    # TODO: support for 3D k-space
-    kmax = 1 / (2 * config['locSpacing'])
+    #TODO: support for 3D k-space
+    kmax = 1/(2*config['locSpacing'])
     xmin, xmax = -kmax, kmax
     ymin, ymax = -kmax, kmax
     fig = plt.figure(figsize=(5, 5), facecolor=colors['bg'], dpi=output['dpi'])
@@ -330,12 +321,12 @@ def plotFrameKspace(config, frame, output):
     plt.tick_params(axis='y', colors=colors['text'])
     plt.tick_params(axis='x', colors=colors['text'])
 
-    frameTime = config['tFrames'][frame] % config['TR']
+    frameTime = config['tFrames'][frame]%config['TR']
     kx, ky, kz = 0, 0, 0
     for i, event in enumerate(config['events']):
         firstFrame, lastFrame = getEventFrames(config, i)
         if event['t'] < frameTime:
-            dur = min(frameTime, config['t'][lastFrame]) - config['t'][firstFrame]
+            dur = min(frameTime, config['t'][lastFrame])-config['t'][firstFrame]
             if 'spoil' in event and event['spoil']:
                 kx, ky, kz = 0, 0, 0
             kx += gyro * event['Gx'] * dur / 1e3
@@ -378,12 +369,11 @@ def plotFramePSD(config, frame, output):
         # draw x axis as arrow
         bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
         width, height = bbox.width, bbox.height  # get width and height of axes object
-        hw = 1 / 25 * (ymax - ymin)  # manual arrowhead width and length
-        hl = 1 / 25 * (xmax - xmin)
-        yhw = hw / (ymax - ymin) * (xmax - xmin) * height / width  # compute matching arrowhead length and width
-        yhl = hl / (xmax - xmin) * (ymax - ymin) * width / height
-        ax.arrow(xmin, 0, (xmax - xmin) * 1.05, 0, fc=colors['text'], ec=colors['text'], lw=1, head_width=hw,
-                 head_length=hl, clip_on=False, zorder=100)
+        hw = 1/25*(ymax-ymin)  # manual arrowhead width and length
+        hl = 1/25*(xmax-xmin)
+        yhw = hw/(ymax-ymin)*(xmax-xmin) * height/width  # compute matching arrowhead length and width
+        yhl = hl/(xmax-xmin)*(ymax-ymin) * width/height
+        ax.arrow(xmin, 0, (xmax-xmin)*1.05, 0, fc=colors['text'], ec=colors['text'], lw=1, head_width=hw, head_length=hl, clip_on=False, zorder=100)
 
         boards = {'w1': {'ypos': 4}, 'Gx': {'ypos': 3}, 'Gy': {'ypos': 2}, 'Gz': {'ypos': 1}}
         for board in boards:
@@ -391,30 +381,26 @@ def plotFramePSD(config, frame, output):
         t = [0]
         for event in config['events']:
             for board in boards:
-                boards[board]['signal'].append(boards[board]['signal'][-1])  # end of previous event:
-                boards[board]['signal'].append(event[board])  # start of this event:
-            t.append(event['t'])  # end of previous event:
-            t.append(event['t'])  # start of this event:
+                boards[board]['signal'].append(boards[board]['signal'][-1]) # end of previous event:
+                boards[board]['signal'].append(event[board]) # start of this event:
+            t.append(event['t']) # end of previous event:
+            t.append(event['t']) # start of this event:
 
         boards['w1']['scale'] = 0.48 / np.max([np.abs(w) for w in boards['w1']['signal'] if np.abs(w) < 50])
         if 'gmax' not in output:
-            output['gmax'] = np.max(
-                np.abs(np.concatenate((boards['Gx']['signal'], boards['Gy']['signal'], boards['Gz']['signal']))))
+            output['gmax'] = np.max(np.abs(np.concatenate((boards['Gx']['signal'], boards['Gy']['signal'], boards['Gz']['signal']))))
         boards['Gx']['scale'] = boards['Gy']['scale'] = boards['Gz']['scale'] = 0.48 / output['gmax']
 
         for board in ['w1', 'Gx', 'Gy', 'Gz']:
-            ax.plot(t, boards[board]['ypos'] + np.array(boards[board]['signal']) * boards[board]['scale'], lw=1,
-                    color=colors['boards'][board])
-            ax.plot([xmin, xmax], [boards[board]['ypos'], boards[board]['ypos']], color=colors['text'], lw=1,
-                    clip_on=False, zorder=100)
+            ax.plot(t, boards[board]['ypos'] + np.array(boards[board]['signal']) * boards[board]['scale'], lw=1, color=colors['boards'][board])
+            ax.plot([xmin, xmax], [boards[board]['ypos'], boards[board]['ypos']], color=colors['text'], lw=1, clip_on=False, zorder=100)
             ax.text(0, boards[board]['ypos'], board, fontsize=14,
-                    color=colors['text'], horizontalalignment='right', verticalalignment='center')
+                color=colors['text'], horizontalalignment='right', verticalalignment='center')
 
         # plot vertical time line:
-        timeLine, = ax.plot([config['tFrames'][frame] % config['TR'], config['tFrames'][frame] % config['TR']], [0, 5],
-                            color=colors['text'], lw=1, clip_on=False, zorder=100)
+        timeLine, = ax.plot([config['tFrames'][frame]%config['TR'], config['tFrames'][frame]%config['TR']], [0, 5], color=colors['text'], lw=1, clip_on=False, zorder=100)
         output['fig'] = fig, timeLine
-    timeLine.set_xdata([config['tFrames'][frame] % config['TR'], config['tFrames'][frame] % config['TR']])
+    timeLine.set_xdata([config['tFrames'][frame]%config['TR'], config['tFrames'][frame]%config['TR']])
     fig.canvas.draw()
     return fig
 
@@ -451,9 +437,9 @@ def derivs(M, t, Meq, w, w1, T1, T2):
     '''
 
     dMdt = np.zeros_like(M)
-    dMdt[0] = -M[0] / T2 + M[1] * w + M[2] * w1.real
-    dMdt[1] = -M[0] * w - M[1] / T2 + M[2] * w1.imag
-    dMdt[2] = -M[0] * w1.real - M[1] * w1.imag + (Meq - M[2]) / T1
+    dMdt[0] = -M[0]/T2+M[1]*w+M[2]*w1.real
+    dMdt[1] = -M[0]*w-M[1]/T2+M[2]*w1.imag
+    dMdt[2] = -M[0]*w1.real-M[1]*w1.imag+(Meq-M[2])/T1
     return dMdt
 
 
@@ -470,17 +456,17 @@ def getEventFrames(config, i):
 
     '''
     try:
-        firstFrame = np.where(config['t'] == config['events'][i]['t'])[0][0]
+        firstFrame = np.where(config['t']==config['events'][i]['t'])[0][0]
     except IndexError:
         print('Event time not found in time vector')
         raise
 
-    if i < len(config['events']) - 1:
-        nextEventTime = config['events'][i + 1]['t']
+    if i < len(config['events'])-1:
+        nextEventTime = config['events'][i+1]['t']
     else:
         nextEventTime = config['TR']
     try:
-        lastFrame = np.where(config['t'] == nextEventTime)[0][0]
+        lastFrame = np.where(config['t']==nextEventTime)[0][0]
     except IndexError:
         print('Event time not found in time vector')
         raise
@@ -506,21 +492,20 @@ def applyPulseSeq(config, Meq, M0, w, T1, T2, pos0, v, D):
 
     '''
     M = np.zeros([len(config['t']), 3])
-    M[0] = M0  # Initial state
+    M[0] = M0 # Initial state
 
-    pos = np.tile(pos0, [len(config['t']), 1])  # initial position
-    if np.linalg.norm(D) > 0:  # diffusion contribution
-        for frame in range(1, len(config['t'])):
-            dt = config['t'][frame] - config['t'][frame - 1]
+    pos = np.tile(pos0, [len(config['t']), 1]) # initial position
+    if np.linalg.norm(D) > 0: # diffusion contribution
+        for frame in range(1,len(config['t'])):
+            dt = config['t'][frame] - config['t'][frame-1]
             for dim in range(3):
-                pos[frame][dim] = pos[frame - 1][dim] + norm.rvs(
-                    scale=np.sqrt(D[dim] * dt * 1e-9))  # standard deviation in meters
-            if config['t'][frame] == 0:  # reset position for t=0
-                pos[:frame + 1] += np.tile(pos0 - pos[frame], [frame + 1, 1])
-    if np.linalg.norm(v) > 0:  # velocity contribution
+                pos[frame][dim] = pos[frame-1][dim] + norm.rvs(scale=np.sqrt(D[dim]*dt*1e-9)) # standard deviation in meters
+            if config['t'][frame]==0: # reset position for t=0
+                pos[:frame+1] += np.tile(pos0 - pos[frame], [frame+1, 1])
+    if np.linalg.norm(v) > 0: # velocity contribution
         pos += np.outer(config['t'], v) * 1e-6
 
-    for rep in range(-config['nDummies'], config['nTR']):  # dummy TRs get negative frame numbers
+    for rep in range(-config['nDummies'], config['nTR']): # dummy TRs get negative frame numbers
         TRstartFrame = rep * config['nFramesPerTR']
 
         for i, event in enumerate(config['events']):
@@ -530,25 +515,24 @@ def applyPulseSeq(config, Meq, M0, w, T1, T2, pos0, v, D):
 
             M0 = M[firstFrame]
 
-            if 'spoil' in event and event['spoil']:  # Spoiler event
+            if 'spoil' in event and event['spoil']: # Spoiler event
                 M0 = spoil(M0)
 
             # frequency due to w plus any gradients
             # (use position at firstFrame, i.e. approximate no motion during frame)
             wg = w
-            wg += 2 * np.pi * gyro * event['Gx'] * pos[firstFrame, 0] / 1000  # [kRad/s]
-            wg += 2 * np.pi * gyro * event['Gy'] * pos[firstFrame, 1] / 1000  # [kRad/s]
-            wg += 2 * np.pi * gyro * event['Gz'] * pos[firstFrame, 2] / 1000  # [kRad/s]
+            wg += 2*np.pi*gyro*event['Gx']*pos[firstFrame, 0]/1000 # [kRad/s]
+            wg += 2*np.pi*gyro*event['Gy']*pos[firstFrame, 1]/1000 # [kRad/s]
+            wg += 2*np.pi*gyro*event['Gz']*pos[firstFrame, 2]/1000 # [kRad/s]
 
             w1 = event['w1'] * np.exp(1j * np.radians(event['phase']))
 
-            t = config['t'][firstFrame:lastFrame + 1]
-            if len(t) == 0:
+            t = config['t'][firstFrame:lastFrame+1]
+            if len(t)==0:
                 raise Exception("Corrupt config['events']")
-            M[firstFrame:lastFrame + 1] = integrate.odeint(derivs, M0, t,
-                                                           args=(Meq, wg, w1, T1, T2))  # Solve Bloch equation
+            M[firstFrame:lastFrame+1] = integrate.odeint(derivs, M0, t, args=(Meq, wg, w1, T1, T2)) # Solve Bloch equation
 
-    return np.concatenate((M, pos), 1).transpose()
+    return np.concatenate((M, pos),1).transpose()
 
 
 def simulateComponent(config, component, Meq, M0=None, pos=None):
@@ -566,19 +550,18 @@ def simulateComponent(config, component, Meq, M0=None, pos=None):
 
     '''
     if not M0:
-        M0 = [0, 0, Meq]  # Default initial state is equilibrium magnetization
+        M0 = [0, 0, Meq] # Default initial state is equilibrium magnetization
     if not pos:
         pos = [0, 0, 0]
     v = [component['vx'], component['vy'], component['vz']]
     D = [component['Dx'], component['Dy'], component['Dz']]
     # Shifts in ppm for dephasing vectors:
-    isochromats = [(2 * i + 1 - config['nIsochromats']) / 2 * config['isochromatStep'] + component['CS'] for i in
-                   range(0, config['nIsochromats'])]
-    comp = np.empty((config['nIsochromats'], 6, len(config['t'])))
+    isochromats = [(2*i+1-config['nIsochromats'])/2*config['isochromatStep']+component['CS'] for i in range(0, config['nIsochromats'])]
+    comp = np.empty((config['nIsochromats'],6,len(config['t'])))
 
     for m, isochromat in enumerate(isochromats):
-        w = config['w0'] * isochromat * 1e-6  # Demodulated frequency [kRad / s]
-        comp[m, :, :] = applyPulseSeq(config, Meq, M0, w, component['T1'], component['T2'], pos, v, D)
+        w = config['w0']*isochromat*1e-6  # Demodulated frequency [kRad / s]
+        comp[m,:,:] = applyPulseSeq(config, Meq, M0, w, component['T1'], component['T2'], pos, v, D)
     return comp
 
 
@@ -607,14 +590,14 @@ def getText(config):
 
             if 'RFtext' in event:
                 config['RFtext'][firstFrame:] = event['RFtext']
-                config['RFalpha'][firstFrame:lastFrame + 1] = 1.0
-            if any('{}text'.format(g) in event for g in ['Gx', 'Gy', 'Gz']):  # gradient event
+                config['RFalpha'][firstFrame:lastFrame+1] = 1.0
+            if any('{}text'.format(g) in event for g in ['Gx', 'Gy', 'Gz']): # gradient event
                 Gtext = ''
                 for g in ['Gx', 'Gy', 'Gz']:
                     if '{}text'.format(g) in event:
                         Gtext += '  ' + event['{}text'.format(g)]
                 config['Gtext'][firstFrame:] = Gtext
-                config['Galpha'][firstFrame:lastFrame + 1] = 1.0
+                config['Galpha'][firstFrame:lastFrame+1] = 1.0
             if 'spoil' in event and event['spoil']:
                 config['spoilAlpha'][firstFrame] = 1.0
 
@@ -630,7 +613,7 @@ def roundEventTime(time):
 
     '''
 
-    return np.round(time, decimals=6)  # nanosecond precision should be enough
+    return np.round(time, decimals=6) # nanosecond precision should be enough
 
 
 def addEventsToTimeVector(t, pulseSeq):
@@ -666,7 +649,7 @@ def calculateFA(B1, dur):
     dwell = dur / len(B1)
     FA = 0
     for b in B1:
-        FA += 360 * (dwell * gyro * np.real(b) * 1e-6)
+        FA += 360*(dwell * gyro * np.real(b) * 1e-6)
     return FA
 
 
@@ -687,11 +670,10 @@ def loadGradfromFile(filename):
             raise Exception('Error reading gradient file {}'.format(filename)) from exc
         if 'grad' in grad:
             grad = grad['grad']
-        if isinstance(grad, list) and len(grad) > 0 and isinstance(grad[0], Number):
+        if isinstance(grad, list) and len(grad)>0 and isinstance(grad[0], Number):
             return grad
         else:
-            raise Exception(
-                'Error reading gradient file {}. File must contain a yaml list of numbers.'.format(filename))
+            raise Exception('Error reading gradient file {}. File must contain a yaml list of numbers.'.format(filename))
 
 
 def isNumList(obj):
@@ -704,7 +686,7 @@ def isNumList(obj):
         true or false
 
     '''
-    return isinstance(obj, list) and len(obj) > 0 and isinstance(obj[0], Number)
+    return isinstance(obj, list) and len(obj)>0 and isinstance(obj[0], Number)
 
 
 def RFfromStruct(RF):
@@ -727,7 +709,7 @@ def RFfromStruct(RF):
                 raise Exception("'phase' of RF struct must be numerical list")
             elif len(RF['phase']) != len(B1):
                 raise Exception("'amp' and 'phase' of RF struct must have equal length")
-            B1 = B1 * np.exp(1j * np.radians(RF['phase']))
+            B1 = B1 * np.exp(1j*np.radians(RF['phase']))
     else:
         raise Exception('Unknown format of RF struct')
     return B1
@@ -762,7 +744,7 @@ def checkPulseSeq(config):
         config['pulseSeq'] = []
     allowedKeys = ['t', 'spoil', 'dur', 'FA', 'B1', 'phase', 'Gx', 'Gy', 'Gz']
     for event in config['pulseSeq']:
-        for item in event.keys():  # allowed keys
+        for item in event.keys(): # allowed keys
             if item not in allowedKeys:
                 raise Exception('PulseSeq key "{}" not supported'.format(item))
         if not 't' in event:
@@ -771,7 +753,7 @@ def checkPulseSeq(config):
             raise Exception('Empty events not allowed')
         if event['t'] > config['TR']:
             raise Exception('pulseSeq event t exceeds TR')
-        if 'spoil' in event:  # Spoiler event
+        if 'spoil' in event: # Spoiler event
             if not event['spoil']:
                 raise Exception('Spoiler event must have spoil: true')
             if any([key not in ['t', 'spoil'] for key in event]):
@@ -780,7 +762,7 @@ def checkPulseSeq(config):
         else:
             if 'dur' not in event:
                 raise Exception('All pulseSeq events except spoiler events must have a duration dur [msec]')
-            if roundEventTime(event['dur']) == 0:
+            if roundEventTime(event['dur'])==0:
                 raise Exception('Event duration is too short')
             if (event['t'] + event['dur']) > config['TR']:
                 raise Exception('pulseSeq event t+dur exceeds TR')
@@ -790,7 +772,7 @@ def checkPulseSeq(config):
             if not ('FA' in event or 'B1' in event):
                 raise Exception('Only RF events can have a phase')
 
-        if 'FA' in event or 'B1' in event:  # RF-pulse event (possibly with gradient)
+        if 'FA' in event or 'B1' in event: # RF-pulse event (possibly with gradient)
 
             # combinations not allowed:
             if 'B1' in event and not 'dur' in event:
@@ -811,23 +793,23 @@ def checkPulseSeq(config):
             # calculate B1 or scale it to get prescribed FA
             if 'FA' in event:
                 if 'B1' not in event:
-                    event['B1'] = np.array([event['FA'] / (event['dur'] * 360 * gyro * 1e-6)])
+                    event['B1'] = np.array([event['FA']/(event['dur'] * 360 * gyro * 1e-6)])
                 else:
-                    event['B1'] = event['B1'] * event['FA'] / calcFA  # scale B1 to get prescribed FA
+                    event['B1'] = event['B1'] * event['FA'] / calcFA # scale B1 to get prescribed FA
             else:
                 event['FA'] = calcFA
 
-            event['w1'] = [2 * np.pi * gyro * B1 * 1e-6 for B1 in event['B1']]  # kRad / s
-            event['RFtext'] = str(int(abs(event['FA']))) + u'\N{DEGREE SIGN}' + '-pulse'
-        if any([key in event for key in ['Gx', 'Gy', 'Gz']]):  # Gradient (no RF)
-            if not ('dur' in event and event['dur'] > 0):
+            event['w1'] = [2 * np.pi * gyro * B1 * 1e-6 for B1 in event['B1']] # kRad / s
+            event['RFtext'] = str(int(abs(event['FA'])))+u'\N{DEGREE SIGN}'+'-pulse'
+        if any([key in event for key in ['Gx', 'Gy', 'Gz']]): # Gradient (no RF)
+            if not ('dur' in event and event['dur']>0):
                 raise Exception('Gradient must have a specified duration>0 (dur [ms])')
             for g in ['Gx', 'Gy', 'Gz']:
                 if g in event:
                     if isinstance(event[g], dict) and 'file' in event[g] and 'amp' in event[g]:
                         grad = loadGradfromFile(event[g]['file'])
                         event[g] = list(np.array(grad) / np.max(grad) * event[g]['amp'])
-                    elif not isinstance(event[g], Number) and not (isinstance(event[g], list) and len(event[g]) > 0):
+                    elif not isinstance(event[g], Number) and not (isinstance(event[g], list) and len(event[g])>0):
                         raise Exception('Unknown type {} for B1'.format(type(event[g])))
 
     # Sort pulseSeq according to event time
@@ -836,21 +818,20 @@ def checkPulseSeq(config):
     # split any pulseSeq events with array values into separate events
     config['separatedPulseSeq'] = []
     for event in config['pulseSeq']:
-        arrLengths = [len(event[key]) for key in ['w1', 'Gx', 'Gy', 'Gz'] if
-                      key in event and isinstance(event[key], list)]
-        if len(arrLengths) > 0:  # arrays in event
+        arrLengths = [len(event[key]) for key in ['w1', 'Gx', 'Gy', 'Gz'] if key in event and isinstance(event[key], list)]
+        if len(arrLengths) > 0: # arrays in event
             arrLength = np.max(arrLengths)
-            if len(set(arrLengths)) == 2 and 1 in set(arrLengths):
+            if len(set(arrLengths))==2 and 1 in set(arrLengths):
                 # extend any singleton arrays to full length
                 for key in ['w1', 'Gx', 'Gy', 'Gz']:
-                    if key in event and isinstance(event[key], list) and len(event[key]) == 1:
+                    if key in event and isinstance(event[key], list) and len(event[key])==1:
                         event[key] *= arrLength
-            elif len(set(arrLengths)) > 1:
+            elif len(set(arrLengths))>1:
                 raise Exception('If w1, Gx, Gy, Gz of an event are provided as lists, equal length is required')
             for i, t in enumerate(np.linspace(event['t'], event['t'] + event['dur'], arrLength, endpoint=False)):
                 subDur = event['dur'] / arrLength
                 subEvent = {'t': t, 'dur': subDur}
-                if i == 0 and spoil in event:
+                if i==0 and spoil in event:
                     subEvent['spoil'] = event['spoil']
                 for key in ['w1', 'Gx', 'Gy', 'Gz', 'phase', 'RFtext']:
                     if key in event:
@@ -929,7 +910,7 @@ def detachEvent(event, event2detach, t):
         if channel in event2detach:
             event[channel] -= event2detach[channel]
     for text in ['RFtext', 'Gxtext', 'Gytext', 'Gztext', 'spoilText']:
-        if text in event and text in event2detach and event[text] == event2detach[text]:
+        if text in event and text in event2detach and event[text]==event2detach[text]:
             del event[text]
     event['t'] = t
     return event
@@ -952,20 +933,20 @@ def getPrescribedTimeVector(config, nTR):
 
     kernelTime = np.array([])
     t = 0
-    dt = 1e3 / config['fps'] * config['speed'][0]['speed']  # Animation time resolution [msec]
+    dt = 1e3 / config['fps'] * config['speed'][0]['speed'] # Animation time resolution [msec]
     for event in speedEvents:
         kernelTime = np.concatenate((kernelTime, np.arange(t, event['t'], dt)), axis=None)
         t = max(t, event['t'])
         if 'speed' in event:
-            dt = 1e3 / config['fps'] * event['speed']  # Animation time resolution [msec]
+            dt = 1e3 / config['fps'] * event['speed'] # Animation time resolution [msec]
         if 'FA' in event or 'B1' in event:
-            RFdt = min(dt, 1e3 / config['fps'] * config['maxRFspeed'])  # Time resolution during RF [msec]
+            RFdt = min(dt, 1e3 / config['fps'] * config['maxRFspeed']) # Time resolution during RF [msec]
             kernelTime = np.concatenate((kernelTime, np.arange(event['t'], event['t'] + event['dur'], RFdt)), axis=None)
             t = event['t'] + event['dur']
     kernelTime = np.concatenate((kernelTime, np.arange(t, config['TR'], dt)), axis=None)
 
     timeVec = np.array([])
-    for rep in range(nTR):  # Repeat time vector for each TR
+    for rep in range(nTR): # Repeat time vector for each TR
         timeVec = np.concatenate((timeVec, kernelTime + rep * config['TR']), axis=None)
     return np.unique(roundEventTime(timeVec))
 
@@ -983,26 +964,25 @@ def setupPulseSeq(config):
     # Create non-overlapping events, each with constant w1, Gx, Gy, Gz, including empty "relaxation" events
     config['events'] = []
     ongoingEvents = []
-    newEvent = emptyEvent()  # Start with empty "relaxation event"
+    newEvent = emptyEvent() # Start with empty "relaxation event"
     newEvent['t'] = 0
     for i, event in enumerate(config['separatedPulseSeq']):
         eventTime = roundEventTime(event['t'])
         # Merge any events starting simultaneously:
-        if eventTime == newEvent['t']:
+        if eventTime==newEvent['t']:
             newEvent = mergeEvent(newEvent, event, eventTime)
         else:
             config['events'].append(dict(newEvent))
             newEvent = mergeEvent(newEvent, event, eventTime)
-        if 'dur' in event:  # event is ongoing unless no 'dur', i.e. spoiler event
+        if 'dur' in event: # event is ongoing unless no 'dur', i.e. spoiler event
             ongoingEvents.append(event)
             # sort ongoing events according to event end time:
             sorted(ongoingEvents, key=lambda event: event['t'] + event['dur'], reverse=False)
         if event is config['separatedPulseSeq'][-1]:
             nextEventTime = roundEventTime(config['TR'])
         else:
-            nextEventTime = roundEventTime(config['separatedPulseSeq'][i + 1]['t'])
-        for stoppingEvent in [event for event in ongoingEvents[::-1] if
-                              roundEventTime(event['t'] + event['dur']) <= nextEventTime]:
+            nextEventTime = roundEventTime(config['separatedPulseSeq'][i+1]['t'])
+        for stoppingEvent in [event for event in ongoingEvents[::-1] if roundEventTime(event['t'] + event['dur']) <= nextEventTime]:
             config['events'].append(dict(newEvent))
             newEvent = detachEvent(newEvent, stoppingEvent, roundEventTime(stoppingEvent['t'] + stoppingEvent['dur']))
             ongoingEvents.pop()
@@ -1015,14 +995,10 @@ def setupPulseSeq(config):
         config['kernelClock'] = config['kernelClock'][:-1]
     config['nFramesPerTR'] = len(config['kernelClock'])
     config['t'] = np.array([])
-    for rep in range(-config['nDummies'],
-                     config['nTR']):  # Repeat time vector for each TR (dummy TR:s get negative time)
-        config['t'] = np.concatenate((config['t'], roundEventTime(config['kernelClock'] + rep * config['TR'])),
-                                     axis=None)
-    config['t'] = np.concatenate((config['t'], roundEventTime(config['nTR'] * config['TR'])),
-                                 axis=None)  # Add end time to time vector
-    config['kernelClock'] = np.concatenate((config['kernelClock'], config['TR']),
-                                           axis=None)  # Add end time to kernel clock
+    for rep in range(-config['nDummies'], config['nTR']): # Repeat time vector for each TR (dummy TR:s get negative time)
+        config['t'] = np.concatenate((config['t'], roundEventTime(config['kernelClock'] + rep * config['TR'])), axis=None)
+    config['t'] = np.concatenate((config['t'], roundEventTime(config['nTR'] * config['TR'])), axis=None) # Add end time to time vector
+    config['kernelClock'] = np.concatenate((config['kernelClock'], config['TR']), axis=None) # Add end time to kernel clock
 
 
 def arrangeLocations(slices, config, key='locations'):
@@ -1042,21 +1018,21 @@ def arrangeLocations(slices, config, key='locations'):
         slices = [slices]
     if not isinstance(slices[0][0], list):
         slices = [slices]
-    if key == 'M0' and not isinstance(slices[0][0][0], list):
+    if key=='M0' and not isinstance(slices[0][0][0], list):
         slices = [slices]
     if 'nz' not in config:
         config['nz'] = len(slices)
-    elif len(slices) != config['nz']:
+    elif len(slices)!=config['nz']:
         raise Exception('Config "{}": number of slices do not match'.format(key))
     if 'ny' not in config:
         config['ny'] = len(slices[0])
-    elif len(slices[0]) != config['ny']:
+    elif len(slices[0])!=config['ny']:
         raise Exception('Config "{}": number of rows do not match'.format(key))
     if 'nx' not in config:
         config['nx'] = len(slices[0][0])
-    elif len(slices[0][0]) != config['nx']:
+    elif len(slices[0][0])!=config['nx']:
         raise Exception('Config "{}": number of elements do not match'.format(key))
-    if key == 'M0' and len(slices[0][0][0]) != 3:
+    if key=='M0' and len(slices[0][0][0])!=3:
         raise Exception('Config "{}": inner dimension must be of length 3'.format(key))
     return slices
 
@@ -1080,10 +1056,10 @@ def checkConfig(config):
     if 'nIsochromats' not in config:
         config['nIsochromats'] = 1
     if 'isochromatStep' not in config:
-        if config['nIsochromats'] > 1:
+        if config['nIsochromats']>1:
             raise Exception('Please specify "isochromatStep" [ppm] in config')
         else:
-            config['isochromatStep'] = 0
+            config['isochromatStep']=0
     if 'components' not in config:
         config['components'] = [{}]
     for comp in config['components']:
@@ -1101,12 +1077,12 @@ def checkConfig(config):
                 comp[key] = default
     config['nComps'] = len(config['components'])
     if 'locSpacing' not in config:
-        config['locSpacing'] = 0.001  # distance between locations [m]
+        config['locSpacing'] = 0.001      # distance between locations [m]
 
     if 'fps' not in config:
-        config['fps'] = 15  # Frames per second in animation (<=15 should be supported by powepoint)
+        config['fps'] = 15 # Frames per second in animation (<=15 should be supported by powepoint)
 
-    config['w0'] = 2 * np.pi * gyro * config['B0']  # Larmor frequency [kRad/s]
+    config['w0'] = 2*np.pi*gyro*config['B0'] # Larmor frequency [kRad/s]
 
     # check speed prescription
     if isinstance(config['speed'], Number):
@@ -1115,7 +1091,7 @@ def checkConfig(config):
         for event in config['speed']:
             if not ('t' in event and 'speed' in event):
                 raise Exception("Each item in 'speed' list must have field 't' [msec] and 'speed'")
-            if event['t'] >= config['TR']:
+            if event['t']>=config['TR']:
                 raise Exception("Specified speed change must be within TR.")
         if not 0 in [event['t'] for event in config['speed']]:
             raise Exception("Speed at time 0 must be specified.")
@@ -1147,7 +1123,7 @@ def checkConfig(config):
             raise Exception('Config "locations" should be list or components dict')
     for (FOV, n) in [('FOVx', 'nx'), ('FOVy', 'ny'), ('FOVz', 'nz')]:
         if FOV not in config:
-            config[FOV] = config[n] * config['locSpacing']  # FOV in m
+            config[FOV] = config[n]*config['locSpacing'] #FOV in m
     if 'M0' in config:
         if isinstance(config['M0'], dict):
             for comp in iter(config['M0']):
@@ -1163,9 +1139,9 @@ def checkConfig(config):
     # check output
     for output in config['output']:
         if 'tRange' in output:
-            if not len(output['tRange']) == 2:
+            if not len(output['tRange'])==2:
                 raise Exception('Output "tRange" expected to be 2-tuple')
-        elif output['type'] == 'psd':
+        elif output['type']=='psd':
             output['tRange'] = [0, config['TR']]
         else:
             output['tRange'] = [0, config['nTR'] * config['TR']]
@@ -1175,9 +1151,9 @@ def checkConfig(config):
             output['freeze'] = []
         elif not isinstance(output['freeze'], list):
             output['freeze'] = [output['freeze']]
-        if output['type'] == '3D':
+        if output['type']=='3D':
             if 'drawAxes' not in output:
-                output['drawAxes'] = config['nx'] * config['ny'] * config['nz'] == 1
+                output['drawAxes'] = config['nx']*config['ny']*config['nz'] == 1
     if 'background' not in config:
         config['background'] = {}
     if 'color' not in config['background']:
@@ -1198,7 +1174,7 @@ def rotMatrix(angle, axis):
 
     '''
     c, s = np.cos(angle), np.sin(angle)
-    R = np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
+    R = np.array([[1,0,0], [0,c,-s], [0,s,c]])
     return np.roll(np.roll(R, axis, axis=0), axis, axis=1)
 
 
@@ -1238,18 +1214,16 @@ def resampleOnPrescribedTimeFrames(vectors, config):
                 for c in range(newShape[3]):
                     for i in range(newShape[4]):
                         for dim in range(newShape[5]):
-                            resampledVectors[x, y, z, c, i, dim, :] = np.interp(config['tFrames'], config['t'],
-                                                                                vectors[x, y, z, c, i, dim, :])
+                            resampledVectors[x,y,z,c,i,dim,:] = np.interp(config['tFrames'], config['t'], vectors[x,y,z,c,i,dim,:])
 
     # resample text alpha channels:
     for channel in ['RFalpha', 'Galpha', 'spoilAlpha']:
         alphaVector = np.zeros([len(config['tFrames'])])
         for i in range(len(alphaVector)):
-            if i == len(alphaVector) - 1:
-                ks = np.where(config['t'] >= config['tFrames'][i])[0]
+            if i == len(alphaVector)-1:
+                ks = np.where(config['t']>=config['tFrames'][i])[0]
             else:
-                ks = \
-                np.where(np.logical_and(config['t'] >= config['tFrames'][i], config['t'] < config['tFrames'][i + 1]))[0]
+                ks = np.where(np.logical_and(config['t']>=config['tFrames'][i], config['t']<config['tFrames'][i+1]))[0]
             alphaVector[i] = np.max(config[channel][ks])
         config[channel] = alphaVector
 
@@ -1257,7 +1231,7 @@ def resampleOnPrescribedTimeFrames(vectors, config):
     for text in ['RFtext', 'Gtext']:
         textVector = np.full([len(config['tFrames'])], '', dtype=object)
         for i in range(len(textVector)):
-            k = np.where(config['t'] >= config['tFrames'][i])[0][0]
+            k = np.where(config['t']>=config['tFrames'][i])[0][0]
             textVector[i] = config[text][k]
         config[text] = textVector
 
@@ -1272,11 +1246,11 @@ def fadeTextFlashes(config, fadeTime=1.0):
         fadeTime:   time of fade in seconds
 
     '''
-    decay = 1.0 / (config['fps'] * fadeTime)  # alpha decrease per frame
+    decay = 1.0/(config['fps'] * fadeTime) # alpha decrease per frame
     for channel in ['RFalpha', 'Galpha', 'spoilAlpha']:
         for i in range(1, len(config[channel])):
-            if config[channel][i] == 0:
-                config[channel][i] = max(0, config[channel][i - 1] - decay)
+            if config[channel][i]==0:
+                config[channel][i] = max(0, config[channel][i-1]-decay)
 
 
 def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
@@ -1301,7 +1275,7 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
 
     # Set global constants
     global gyro
-    gyro = 42577.  # Gyromagnetic ratio [kHz/T]
+    gyro = 42577.			# Gyromagnetic ratio [kHz/T]
 
     # Read configuration file
     with open(configFile, 'r') as f:
@@ -1315,11 +1289,10 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
 
     if config['background']['color'] == 'black':
         for i in ['bg', 'axis', 'text', 'circle']:
-            colors[i][:3] = list(map(lambda x: 1 - x, colors[i][:3]))
+            colors[i][:3] = list(map(lambda x: 1-x, colors[i][:3]))
 
     ### Simulate ###
-    vectors = np.empty(
-        (config['nx'], config['ny'], config['nz'], config['nComps'], config['nIsochromats'], 6, len(config['t'])))
+    vectors = np.empty((config['nx'],config['ny'],config['nz'],config['nComps'],config['nIsochromats'],6,len(config['t'])))
     for z in range(config['nz']):
         for y in range(config['ny']):
             for x in range(config['nx']):
@@ -1342,26 +1315,26 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
                         M0 = spherical2cartesian(config['M0'][z][y][x])
                     else:
                         M0 = None
-                    pos = [(x + .5 - config['nx'] / 2) * config['locSpacing'],
-                           (y + .5 - config['ny'] / 2) * config['locSpacing'],
-                           (z + .5 - config['nz'] / 2) * config['locSpacing']]
-                    vectors[x, y, z, c, :, :, :] = simulateComponent(config, component, Meq, M0, pos)
+                    pos = [(x+.5-config['nx']/2)*config['locSpacing'],
+                           (y+.5-config['ny']/2)*config['locSpacing'],
+                           (z+.5-config['nz']/2)*config['locSpacing']]
+                    vectors[x,y,z,c,:,:,:] = simulateComponent(config, component, Meq, M0, pos)
 
     ### Animate ###
-    getText(config)  # prepare text flashes for 3D plot
+    getText(config) # prepare text flashes for 3D plot
     vectors = resampleOnPrescribedTimeFrames(vectors, config)
     fadeTextFlashes(config)
-    delay = int(100 / config['fps'] * leapFactor)  # Delay between frames in ticks of 1/100 sec
+    delay = int(100/config['fps']*leapFactor)  # Delay between frames in ticks of 1/100 sec
 
     outdir = './out'
     for output in config['output']:
         if output['file']:
             if output['type'] in ['xy', 'z']:
-                signal = np.sum(vectors[:, :, :, :, :, :3, :], (0, 1, 2, 4))  # sum over space and isochromats
+                signal = np.sum(vectors[:,:,:,:,:,:3,:], (0,1,2,4)) # sum over space and isochromats
                 if 'normalize' in output and output['normalize']:
                     for c, comp in enumerate([n['name'] for n in config['components']]):
-                        signal[c, :] /= np.sum(config['locations'][comp])
-                signal /= np.max(np.abs(signal))  # scale signal relative to maximum
+                        signal[c,:] /= np.sum(config['locations'][comp])
+                signal /= np.max(np.abs(signal)) # scale signal relative to maximum
                 if 'scale' in output:
                     signal *= output['scale']
             if gifWriter == 'ffmpeg':
@@ -1399,17 +1372,17 @@ def run(configFile, leapFactor=1, gifWriter='ffmpeg'):
 
                 if gifWriter == 'ffmpeg':
                     ffmpegWriter.addFrame(fig)
-                else:  # use imagemagick: save frames temporarily
+                else: # use imagemagick: save frames temporarily
                     filesToSave.append(os.path.join(tmpdir, '{}.png'.format(str(frame).zfill(4))))
 
                 for file in filesToSave:
-                    print('Saving frame {}/{} as "{}"'.format(frame + 1, len(config['tFrames']), file))
+                    print('Saving frame {}/{} as "{}"'.format(frame+1, len(config['tFrames']), file))
                     plt.savefig(file, facecolor=plt.gcf().get_facecolor())
 
                 plt.close()
             if gifWriter == 'ffmpeg':
                 ffmpegWriter.write(outfile)
-            else:  # use imagemagick
+            else: # use imagemagick
                 print('Creating animated gif "{}"'.format(outfile))
                 compress = '-layers Optimize'
                 os.system(('convert {} -delay {} {}/*png {}'.format(compress, delay, tmpdir, outfile)))
@@ -1420,8 +1393,7 @@ def parseAndRun():
     ''' Command line parser. Parse command line and run main program. '''
 
     # Initiate command line parser
-    parser = argparse.ArgumentParser(
-        description='Simulate magnetization vectors using Bloch equations and create animated gif')
+    parser = argparse.ArgumentParser(description='Simulate magnetization vectors using Bloch equations and create animated gif')
     parser.add_argument('--configFile', '-c',
                         help="Name of configuration text file",
                         type=str,
@@ -1436,7 +1408,6 @@ def parseAndRun():
 
     # Run main program
     run(args.configFile, args.leapFactor)
-
 
 if __name__ == '__main__':
     parseAndRun()

@@ -1,0 +1,41 @@
+title: Relaxation
+pulseSeq:
+  - t: 0
+    FA: 90
+    B1: 'RF/exc_min_phase.yml'
+    dur: 3
+
+TR: 200
+B0: 3
+components:
+    - T1: 700
+      T2: 70
+      CS: 0
+nIsochromats: 20
+isochromatStep: 0.001
+speed: 0.01
+background:
+  color: white
+output:
+  - type: 3D
+    file: FID_3D.gif
+    dpi: 150
+  - type: xy
+    abs: true
+    normalize: False
+    freeze: [300.0]
+    dpi: 150
+    file: FID_xy_abs.gif
+  - type: xy
+    abs: false
+    freeze: [300.0]
+    dpi: 150
+    file: FID_xy.gif
+  - type: z
+    freeze: [300.0]
+    dpi: 150
+    file: FID_z.gif
+  - type: psd
+    freeze: [300.0]
+    dpi: 150
+    file: FID_psd.gif
